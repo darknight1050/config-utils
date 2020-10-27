@@ -1,5 +1,5 @@
 #pragma once
-#include "ConfigUtils.hpp"
+#include "config-utils.hpp"
 
 DECLARE_CONFIG(TestConfig,
 
