@@ -7,7 +7,10 @@
     "version": "0.1.0",
     "url": "https://github.com/darknight1050/ConfigUtils",
     "additionalData": {
-      "headersOnly": true
+      "headersOnly": true,
+      "branchName": "version-v0.1.0",
+      "soLink": "https://github.com/darknight1050/ConfigUtils/releases/download/v0.1.0/libConfigUtils_0_1_0.so",
+      "debugSoLink": "https://github.com/darknight1050/ConfigUtils/releases/download/v0.1.0/debug_libConfigUtils_0_1_0.so"
     }
   },
   "dependencies": [
