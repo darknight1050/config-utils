@@ -2,18 +2,19 @@
   "sharedDir": "shared",
   "dependenciesDir": "extern",
   "info": {
-    "name": "ConfigUtils",
-    "id": "ConfigUtils",
-    "version": "0.1.0",
-    "url": "https://github.com/darknight1050/ConfigUtils",
+    "name": "config-utils",
+    "id": "config-utils",
+    "version": "0.1.1",
+    "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
-      "headersOnly": true
+      "headersOnly": true,
+      "overrideSoName": "libconfig-utils_test.so"
     }
   },
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^0.7.7",
+      "versionRange": "^0.8.2",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"

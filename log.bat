@@ -1,1 +1,1 @@
-call adb logcat | findstr ConfigUtils
+call adb logcat | findstr config-utils

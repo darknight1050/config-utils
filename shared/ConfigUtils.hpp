@@ -22,12 +22,14 @@ void Init(Configuration* config) { impl }
 #define INIT_VALUE(name) \
 name.Init(config);
 
-#define AddConfigValueToggle(parent, boolConfigValue) QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), il2cpp_utils::MakeAction<UnityEngine::Events::UnityAction_1<bool>>(il2cpp_functions::class_get_type(classof(UnityEngine::Events::UnityAction_1<bool>*)), (void*)nullptr, +[](bool toggle) { boolConfigValue.SetValue(toggle); }))->GetComponent<UnityEngine::UI::Toggle*>()->set_isOn(boolConfigValue.GetValue());
+#ifdef HAS_CODEGEN
+#define AddConfigValueToggle(parent, boolConfigValue) QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<bool>*>(classof(UnityEngine::Events::UnityAction_1<bool>*), (void*)nullptr, +[](bool toggle) { boolConfigValue.SetValue(toggle); }))
+#endif
 
 namespace ConfigUtils {
 
     inline const Logger& getLogger() {
-        static const Logger logger(ModInfo{"ConfigUtils", "0.1.0"});
+        static const Logger logger(ModInfo{"config-utils", "0.1.1"});
         return logger;
     }
     
@@ -89,7 +91,7 @@ namespace ConfigUtils {
                 return name;
             }
     };
-
+   
 }
 
 #pragma region SimpleMacrosDefine
