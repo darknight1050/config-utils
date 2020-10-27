@@ -6,7 +6,9 @@
     "id": "ConfigUtils",
     "version": "0.1.0",
     "url": "https://github.com/darknight1050/ConfigUtils",
-    "additionalData": {}
+    "additionalData": {
+      "headersOnly": true
+    }
   },
   "dependencies": [
     {
