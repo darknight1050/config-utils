@@ -8,7 +8,10 @@
     "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
       "headersOnly": true,
-      "overrideSoName": "libconfig-utils_test.so"
+      "overrideSoName": "libconfig-utils_test.so",
+      "branchName": "version-v0.1.1",
+      "soLink": "https://github.com/darknight1050/config-utils/releases/download/v0.1.1/libconfig-utils_test.so",
+      "debugSoLink": "https://github.com/darknight1050/config-utils/releases/download/v0.1.1/debug_libconfig-utils_test.so"
     }
   },
   "dependencies": [
