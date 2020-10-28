@@ -79,7 +79,7 @@ jobs:
       id: libname
       run: |
         cd ./libs/arm64-v8a/
-        pattern="libConfigUtils*.so"
+        pattern="libconfig-utils_test*.so"
         files=( $pattern )
         echo ::set-output name=NAME::"${files[0]}"
     - name: Upload non-debug artifact
