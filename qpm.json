@@ -4,7 +4,7 @@
   "info": {
     "name": "config-utils",
     "id": "config-utils",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
       "headersOnly": true,
@@ -14,12 +14,8 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^0.8.2",
-      "additionalData": {
-        "extraFiles": [
-          "src/inline-hook"
-        ]
-      }
+      "versionRange": "^0.8.4",
+      "additionalData": {}
     }
   ],
   "additionalData": {}
