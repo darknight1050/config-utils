@@ -6,8 +6,8 @@
 
 static ModInfo modInfo;
 
-const Logger& getLogger() {
-    static const Logger logger(modInfo);
+Logger& getLogger() {
+    static Logger logger(modInfo);
     return logger;
 }
 

@@ -28,8 +28,8 @@ name.Init(config);
 
 namespace ConfigUtils {
 
-    inline const Logger& getLogger() {
-        static const Logger logger(ModInfo{"config-utils", "0.1.1"});
+    inline Logger& getLogger() {
+        static Logger logger(ModInfo{"config-utils", "0.1.1"});
         return logger;
     }
     
