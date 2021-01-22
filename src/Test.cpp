@@ -7,8 +7,8 @@
 static ModInfo modInfo;
 
 Logger& getLogger() {
-    static Logger logger(modInfo);
-    return logger;
+    static auto logger = new Logger(modInfo);
+    return *logger;
 }
 
 Configuration& getConfig() {

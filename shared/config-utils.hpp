@@ -29,8 +29,8 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static Logger logger(ModInfo{"config-utils", "0.1.1"});
-        return logger;
+        static auto logger = new Logger(ModInfo{"config-utils", "0.1.4"});
+        return *logger;
     }
     
     template <typename ValueType> 
