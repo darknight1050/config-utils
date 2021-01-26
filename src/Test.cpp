@@ -1,8 +1,8 @@
 #include "beatsaber-hook/shared/utils/utils.h"
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
-#include "beatsaber-hook/shared/config/config-utils.hpp"
 
-#include "TestConfig.hpp"
+//Include the Config header
+#include "ModConfig.hpp"
 
 static ModInfo modInfo;
 
@@ -11,29 +11,26 @@ Logger& getLogger() {
     return *logger;
 }
 
-Configuration& getConfig() {
-    static Configuration configuration(modInfo);
-    return configuration;
-}
-
-DEFINE_CONFIG(TestConfig);
+//Define Config
+DEFINE_CONFIG(ModConfig);
 
 extern "C" void setup(ModInfo& info) {
     info.id = "ConfigUtilsTest";
     info.version = VERSION;
     modInfo = info;
-    getConfig().Load();
-    getTestConfig().Init(&getConfig());
+    //Init/Load Config
+    getModConfig().Init(modInfo);
 }
 
 extern "C" void load() {
     il2cpp_functions::Init();
-    getLogger().info("TestBool: %d", getTestConfig().TestBool.GetValue());
-    getLogger().info("TestInt: %d", getTestConfig().TestInt.GetValue());
-    getLogger().info("TestFloat: %f", getTestConfig().TestFloat.GetValue());
-    getLogger().info("TestString: %s", getTestConfig().TestString.GetValue().c_str());
-    getTestConfig().TestBool.SetValue(false);
-    getTestConfig().TestInt.SetValue(1);
-    getTestConfig().TestFloat.SetValue(1337.0f);
-    getTestConfig().TestString.SetValue("Changed");
+    //Access Config Values
+    getLogger().info("SampleBool: %d", getModConfig().SampleBool.GetValue());
+    getLogger().info("SampleInt: %d", getModConfig().SampleInt.GetValue());
+    getLogger().info("SampleFloat: %f", getModConfig().SampleFloat.GetValue());
+    getLogger().info("SampleString: %s", getModConfig().SampleString.GetValue().c_str());
+    getModConfig().SampleBool.SetValue(false);
+    getModConfig().SampleInt.SetValue(1);
+    getModConfig().SampleFloat.SetValue(1337.0f);
+    getModConfig().SampleString.SetValue("Changed");
 }

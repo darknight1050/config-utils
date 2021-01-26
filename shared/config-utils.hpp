@@ -10,6 +10,7 @@ name##_t& get##name() { \
 
 #define DECLARE_CONFIG(name, impl) \
 struct name##_t { \
+    Configuration* config = nullptr; \
     impl \
 }; \
 name##_t& get##name();
@@ -18,18 +19,51 @@ name##_t& get##name();
 ConfigUtils::ConfigValue<type> name = ConfigUtils::ConfigValue<type>(__VA_ARGS__);
 
 #define INIT_FUNCTION(impl) \
-void Init(Configuration* config) { impl }
+void Init(const ModInfo info) { \
+    if(config) \
+        delete config; \
+    config = new Configuration(info); \
+    config->Load(); \
+    impl \
+}
 #define INIT_VALUE(name) \
 name.Init(config);
 
 #ifdef HAS_CODEGEN
-#define AddConfigValueToggle(parent, boolConfigValue) QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<bool>*>(classof(UnityEngine::Events::UnityAction_1<bool>*), (void*)nullptr, +[](bool toggle) { boolConfigValue.SetValue(toggle); }))
+#define AddConfigValueToggle(parent, boolConfigValue) \
+QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), \
+    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<bool>*>(classof(UnityEngine::Events::UnityAction_1<bool>*), (void*)nullptr, \
+    +[](bool toggle) { \
+        boolConfigValue.SetValue(toggle); \
+    }))
+
+#define AddConfigValueIncrementInt(parent, intConfigValue, increment, min, max) \
+BeatSaberUI::CreateIncrementSetting(parent, intConfigValue.GetName(), 0, increment, intConfigValue.GetValue(), min, max, \
+    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<float>*>(classof(UnityEngine::Events::UnityAction_1<float>*), (void*)nullptr, \
+    +[](float value) { \
+        intConfigValue.SetValue((int)value); \
+    }))
+
+#define AddConfigValueIncrementFloat(parent, floatConfigValue, decimal, increment, min, max) \
+BeatSaberUI::CreateIncrementSetting(parent, floatConfigValue.GetName(), decimal, increment, floatConfigValue.GetValue(), min, max, \
+    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<float>*>(classof(UnityEngine::Events::UnityAction_1<float>*), (void*)nullptr, \
+    +[](float value) { \
+        floatConfigValue.SetValue(value); \
+    }))
+
+#define AddConfigValueStringSetting(parent, stringConfigValue) \
+BeatSaberUI::CreateStringSetting(parent, stringConfigValue.GetName(), stringConfigValue.GetValue(), \
+    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<Il2CppString*>*>(classof(UnityEngine::Events::UnityAction_1<Il2CppString*>*), (void*)nullptr, \
+    +[](Il2CppString* value) { \
+        stringConfigValue.SetValue(to_utf8(csstrtostr(value))); \
+    }))
+
 #endif
 
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.1.4"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.2.0"});
         return *logger;
     }
     
