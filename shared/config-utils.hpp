@@ -32,32 +32,34 @@ name.Init(config);
 #ifdef HAS_CODEGEN
 #define AddConfigValueToggle(parent, boolConfigValue) \
 QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), \
-    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<bool>*>(classof(UnityEngine::Events::UnityAction_1<bool>*), (void*)nullptr, \
-    +[](bool toggle) { \
+    [](bool toggle) { \
         boolConfigValue.SetValue(toggle); \
-    }))
+    })
 
 #define AddConfigValueIncrementInt(parent, intConfigValue, increment, min, max) \
-BeatSaberUI::CreateIncrementSetting(parent, intConfigValue.GetName(), 0, increment, intConfigValue.GetValue(), min, max, \
-    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<float>*>(classof(UnityEngine::Events::UnityAction_1<float>*), (void*)nullptr, \
-    +[](float value) { \
+QuestUI::BeatSaberUI::CreateIncrementSetting(parent, intConfigValue.GetName(), 0, increment, intConfigValue.GetValue(), min, max, \
+    [](float value) { \
         intConfigValue.SetValue((int)value); \
-    }))
+    })
 
 #define AddConfigValueIncrementFloat(parent, floatConfigValue, decimal, increment, min, max) \
-BeatSaberUI::CreateIncrementSetting(parent, floatConfigValue.GetName(), decimal, increment, floatConfigValue.GetValue(), min, max, \
-    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<float>*>(classof(UnityEngine::Events::UnityAction_1<float>*), (void*)nullptr, \
-    +[](float value) { \
+QuestUI::BeatSaberUI::CreateIncrementSetting(parent, floatConfigValue.GetName(), decimal, increment, floatConfigValue.GetValue(), min, max, \
+    [](float value) { \
         floatConfigValue.SetValue(value); \
-    }))
+    })
 
 #define AddConfigValueStringSetting(parent, stringConfigValue) \
-BeatSaberUI::CreateStringSetting(parent, stringConfigValue.GetName(), stringConfigValue.GetValue(), \
-    il2cpp_utils::MakeDelegate<UnityEngine::Events::UnityAction_1<Il2CppString*>*>(classof(UnityEngine::Events::UnityAction_1<Il2CppString*>*), (void*)nullptr, \
-    +[](Il2CppString* value) { \
-        stringConfigValue.SetValue(to_utf8(csstrtostr(value))); \
-    }))
+QuestUI::BeatSaberUI::CreateStringSetting(parent, stringConfigValue.GetName(), stringConfigValue.GetValue(), \
+    [](std::string value) { \
+        stringConfigValue.SetValue(value); \
+    })
 
+#define AddConfigValueColorPicker(parent, colorConfigValue) \
+QuestUI::BeatSaberUI::CreateColorPicker(parent, colorConfigValue.GetName(), colorConfigValue.GetValue(), \
+    [](UnityEngine::Color value, GlobalNamespace::ColorChangeUIEventType eventType) { \
+        if(eventType == GlobalNamespace::ColorChangeUIEventType::PointerUp) \
+            colorConfigValue.SetValue(value); \
+    })
 #endif
 
 namespace ConfigUtils {
@@ -287,6 +289,40 @@ VECTOR_LOAD(UnityEngine::Vector4,
     VECTOR_COORD_LOAD(z)
     VECTOR_COORD_LOAD(w)
 )
+#pragma endregion
+
+#pragma region ColorValue
+#define COLOR_COORD_SAVE(name) \
+if(object.HasMember(#name)) { \
+    object[#name].SetFloat(value.name * 255.0f); \
+} else { \
+    object.AddMember(#name, value.name * 255.0f, allocator); \
+}
+
+#define COLOR_COORD_LOAD(name) \
+if(object.HasMember(#name)) { \
+    value.name = object[#name].GetFloat() / 255.0f; \
+} else { \
+    object.AddMember(#name, value.name * 255.0f, allocator); \
+    write = true; \
+}
+
+#include "UnityEngine/Color.hpp"
+VECTOR_SAVE(UnityEngine::Color, 
+    COLOR_COORD_SAVE(r)
+    COLOR_COORD_SAVE(g)
+    COLOR_COORD_SAVE(b)
+    COLOR_COORD_SAVE(a)
+)
+
+VECTOR_LOAD(UnityEngine::Color, 
+    COLOR_COORD_LOAD(r)
+    COLOR_COORD_LOAD(g)
+    COLOR_COORD_LOAD(b)
+    COLOR_COORD_LOAD(a)
+)
+#undef COLOR_COORD_SAVE
+#undef COLOR_COORD_LOAD
 #pragma endregion
 
 #pragma region VectorMacrosUndefine
