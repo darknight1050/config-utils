@@ -29,43 +29,10 @@ void Init(const ModInfo info) { \
 #define INIT_VALUE(name) \
 name.Init(config);
 
-#ifdef HAS_CODEGEN
-#define AddConfigValueToggle(parent, boolConfigValue) \
-QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), \
-    [](bool toggle) { \
-        boolConfigValue.SetValue(toggle); \
-    })
-
-#define AddConfigValueIncrementInt(parent, intConfigValue, increment, min, max) \
-QuestUI::BeatSaberUI::CreateIncrementSetting(parent, intConfigValue.GetName(), 0, increment, intConfigValue.GetValue(), min, max, \
-    [](float value) { \
-        intConfigValue.SetValue((int)value); \
-    })
-
-#define AddConfigValueIncrementFloat(parent, floatConfigValue, decimal, increment, min, max) \
-QuestUI::BeatSaberUI::CreateIncrementSetting(parent, floatConfigValue.GetName(), decimal, increment, floatConfigValue.GetValue(), min, max, \
-    [](float value) { \
-        floatConfigValue.SetValue(value); \
-    })
-
-#define AddConfigValueStringSetting(parent, stringConfigValue) \
-QuestUI::BeatSaberUI::CreateStringSetting(parent, stringConfigValue.GetName(), stringConfigValue.GetValue(), \
-    [](std::string value) { \
-        stringConfigValue.SetValue(value); \
-    })
-
-#define AddConfigValueColorPicker(parent, colorConfigValue) \
-QuestUI::BeatSaberUI::CreateColorPicker(parent, colorConfigValue.GetName(), colorConfigValue.GetValue(), \
-    [](UnityEngine::Color value, GlobalNamespace::ColorChangeUIEventType eventType) { \
-        if(eventType == GlobalNamespace::ColorChangeUIEventType::PointerUp) \
-            colorConfigValue.SetValue(value); \
-    })
-#endif
-
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.2.0"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.2.2"});
         return *logger;
     }
     
@@ -113,9 +80,9 @@ namespace ConfigUtils {
                 return value;
             }
 
-            void SetValue(ValueType value) {
+            void SetValue(ValueType value, bool save = true) {
                 this->value = value;
-                if(autoSave)
+                if(save && autoSave)
                     SaveValue();
             }
 
@@ -342,3 +309,53 @@ VECTOR_LOAD(UnityEngine::Color,
 #undef SIMPLE_LOAD
 #undef SIMPLE_VALUE
 #pragma endregion
+
+#ifdef HAS_CODEGEN
+#define AddConfigValueToggle(parent, boolConfigValue) \
+QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), \
+    [](bool toggle) { \
+        boolConfigValue.SetValue(toggle); \
+    })
+
+#define AddConfigValueIncrementInt(parent, intConfigValue, increment, min, max) \
+QuestUI::BeatSaberUI::CreateIncrementSetting(parent, intConfigValue.GetName(), 0, increment, intConfigValue.GetValue(), min, max, \
+    [](float value) { \
+        intConfigValue.SetValue((int)value); \
+    })
+
+#define AddConfigValueIncrementFloat(parent, floatConfigValue, decimal, increment, min, max) \
+QuestUI::BeatSaberUI::CreateIncrementSetting(parent, floatConfigValue.GetName(), decimal, increment, floatConfigValue.GetValue(), min, max, \
+    [](float value) { \
+        floatConfigValue.SetValue(value); \
+    })
+
+#define AddConfigValueStringSetting(parent, stringConfigValue) \
+QuestUI::BeatSaberUI::CreateStringSetting(parent, stringConfigValue.GetName(), stringConfigValue.GetValue(), \
+    [](std::string value) { \
+        stringConfigValue.SetValue(value); \
+    })
+
+#define AddConfigValueColorPicker(parent, colorConfigValue) \
+QuestUI::BeatSaberUI::CreateColorPicker(parent, colorConfigValue.GetName(), colorConfigValue.GetValue(), \
+    [](UnityEngine::Color value, GlobalNamespace::ColorChangeUIEventType eventType) { \
+        colorConfigValue.SetValue(value, eventType == GlobalNamespace::ColorChangeUIEventType::PointerUp); \
+    })
+#define AddConfigValueIncrementVectorCoord(coord, name, parent, vectorConfigValue, decimal, increment) \
+QuestUI::BeatSaberUI::CreateIncrementSetting(parent, vectorConfigValue.GetName() + " " + #name, decimal, increment, vectorConfigValue.GetValue().coord, \
+    [](float value) { \
+        auto newValue = vectorConfigValue.GetValue(); \
+        newValue.coord = value; \
+        vectorConfigValue.SetValue(newValue); \
+    })
+#define AddConfigValueIncrementVector2(parent, vectorConfigValue, decimal, increment) \
+AddConfigValueIncrementVectorCoord(x, X, parent, vectorConfigValue, decimal, increment); \
+AddConfigValueIncrementVectorCoord(y, Y, parent, vectorConfigValue, decimal, increment);
+
+#define AddConfigValueIncrementVector3(parent, vectorConfigValue, decimal, increment) \
+AddConfigValueIncrementVector2(parent, vectorConfigValue, decimal, increment); \
+AddConfigValueIncrementVectorCoord(z, Z, parent, vectorConfigValue, decimal, increment);
+
+#define AddConfigValueIncrementVector4(parent, vectorConfigValue, decimal, increment) \
+AddConfigValueIncrementVector3(parent, vectorConfigValue, decimal, increment); \
+AddConfigValueIncrementVectorCoord(w, W, parent, vectorConfigValue, decimal, increment);
+#endif
