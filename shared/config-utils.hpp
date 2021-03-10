@@ -32,7 +32,7 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.2.2"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.3.0"});
         return *logger;
     }
     
@@ -42,18 +42,18 @@ namespace ConfigUtils {
             std::string name;
             ValueType value;
             ValueType defaultValue;
-            bool autoSave;
-            Configuration* config;
+            std::string hoverHint;
+            Configuration* config = nullptr;
 
         public:
-            ConfigValue(std::string name, ValueType defaultValue, bool autoSave) {
+            ConfigValue(std::string name, ValueType defaultValue) {
                 this->name = name;
                 this->defaultValue = defaultValue;
-                this->autoSave = autoSave;
-                this->config = nullptr;
             }
 
-            ConfigValue(std::string name, ValueType defaultValue) : ConfigValue(name, defaultValue, true) {}
+            ConfigValue(std::string name, ValueType defaultValue, std::string hoverHint) : ConfigValue(name, defaultValue) {
+                this->hoverHint = hoverHint;
+            }
 
             void Init(Configuration* cfg) {
                 this->config = cfg;
@@ -67,8 +67,6 @@ namespace ConfigUtils {
                     auto& allocator = config->config.GetAllocator();
                     config->config.AddMember(rapidjson::Value(name.c_str(), allocator).Move(), rapidjson::Value(), allocator);
                     SetValue(defaultValue);
-                    if(!autoSave)
-                        SaveValue();
                 }
                 GetValue();
             }
@@ -82,7 +80,7 @@ namespace ConfigUtils {
 
             void SetValue(ValueType value, bool save = true) {
                 this->value = value;
-                if(save && autoSave)
+                if(save)
                     SaveValue();
             }
 
@@ -92,6 +90,10 @@ namespace ConfigUtils {
 
             std::string GetName() {
                 return name;
+            }
+
+            std::string GetHoverHint() {
+                return hoverHint;
             }
     };
    
@@ -112,8 +114,6 @@ inline void ConfigUtils::ConfigValue<type>::LoadValue() { \
         value = config->config[name].Get##typeName(); \
     } else { \
         SetValue(defaultValue); \
-        if(!autoSave) \
-            SaveValue(); \
     } \
 }
 
@@ -144,10 +144,7 @@ inline void ConfigUtils::ConfigValue<char*>::LoadValue() {
         value = (char*)config->config[name].GetString();
     } else {
         SetValue(defaultValue);
-        if(!autoSave)
-            SaveValue();
     }
-    
 }
 
 template<>
@@ -215,12 +212,12 @@ if(object.HasMember(#name)) { \
 
 #pragma region Vector2Value
 #include "UnityEngine/Vector2.hpp"
-VECTOR_SAVE(UnityEngine::Vector2, 
+VECTOR_SAVE(::UnityEngine::Vector2, 
     VECTOR_COORD_SAVE(x)
     VECTOR_COORD_SAVE(y)
 )
 
-VECTOR_LOAD(UnityEngine::Vector2, 
+VECTOR_LOAD(::UnityEngine::Vector2, 
     VECTOR_COORD_LOAD(x)
     VECTOR_COORD_LOAD(y)
 )
@@ -228,13 +225,13 @@ VECTOR_LOAD(UnityEngine::Vector2,
 
 #pragma region Vector3Value
 #include "UnityEngine/Vector3.hpp"
-VECTOR_SAVE(UnityEngine::Vector3, 
+VECTOR_SAVE(::UnityEngine::Vector3, 
     VECTOR_COORD_SAVE(x)
     VECTOR_COORD_SAVE(y)
     VECTOR_COORD_SAVE(z)
 )
 
-VECTOR_LOAD(UnityEngine::Vector3, 
+VECTOR_LOAD(::UnityEngine::Vector3, 
     VECTOR_COORD_LOAD(x)
     VECTOR_COORD_LOAD(y)
     VECTOR_COORD_LOAD(z)
@@ -243,14 +240,14 @@ VECTOR_LOAD(UnityEngine::Vector3,
 
 #pragma region Vector4Value
 #include "UnityEngine/Vector4.hpp"
-VECTOR_SAVE(UnityEngine::Vector4, 
+VECTOR_SAVE(::UnityEngine::Vector4, 
     VECTOR_COORD_SAVE(x)
     VECTOR_COORD_SAVE(y)
     VECTOR_COORD_SAVE(z)
     VECTOR_COORD_SAVE(w)
 )
 
-VECTOR_LOAD(UnityEngine::Vector4, 
+VECTOR_LOAD(::UnityEngine::Vector4, 
     VECTOR_COORD_LOAD(x)
     VECTOR_COORD_LOAD(y)
     VECTOR_COORD_LOAD(z)
@@ -275,14 +272,14 @@ if(object.HasMember(#name)) { \
 }
 
 #include "UnityEngine/Color.hpp"
-VECTOR_SAVE(UnityEngine::Color, 
+VECTOR_SAVE(::UnityEngine::Color, 
     COLOR_COORD_SAVE(r)
     COLOR_COORD_SAVE(g)
     COLOR_COORD_SAVE(b)
     COLOR_COORD_SAVE(a)
 )
 
-VECTOR_LOAD(UnityEngine::Color, 
+VECTOR_LOAD(::UnityEngine::Color, 
     COLOR_COORD_LOAD(r)
     COLOR_COORD_LOAD(g)
     COLOR_COORD_LOAD(b)
@@ -310,38 +307,65 @@ VECTOR_LOAD(UnityEngine::Color,
 #undef SIMPLE_VALUE
 #pragma endregion
 
+
 #ifdef HAS_CODEGEN
-#define AddConfigValueToggle(parent, boolConfigValue) \
-QuestUI::BeatSaberUI::CreateToggle(parent, boolConfigValue.GetName(), boolConfigValue.GetValue(), \
-    [](bool toggle) { \
-        boolConfigValue.SetValue(toggle); \
-    })
+inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
+    auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), 
+        [&configValue](bool value) { 
+            configValue.SetValue(value); 
+        }
+    );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+    return object;
+}
 
-#define AddConfigValueIncrementInt(parent, intConfigValue, increment, min, max) \
-QuestUI::BeatSaberUI::CreateIncrementSetting(parent, intConfigValue.GetName(), 0, increment, intConfigValue.GetValue(), min, max, \
-    [](float value) { \
-        intConfigValue.SetValue((int)value); \
-    })
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
+        [&configValue](float value) {
+            configValue.SetValue((int)value); 
+        }
+    );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+    return object;
+}
 
-#define AddConfigValueIncrementFloat(parent, floatConfigValue, decimal, increment, min, max) \
-QuestUI::BeatSaberUI::CreateIncrementSetting(parent, floatConfigValue.GetName(), decimal, increment, floatConfigValue.GetValue(), min, max, \
-    [](float value) { \
-        floatConfigValue.SetValue(value); \
-    })
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max) {
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
+        [&configValue](float value) {
+            configValue.SetValue(value); 
+        }
+    );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+    return object;
+}
 
-#define AddConfigValueStringSetting(parent, stringConfigValue) \
-QuestUI::BeatSaberUI::CreateStringSetting(parent, stringConfigValue.GetName(), stringConfigValue.GetValue(), \
-    [](std::string value) { \
-        stringConfigValue.SetValue(value); \
-    })
+inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<std::string>& configValue) {
+    auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
+        [&configValue](std::string value) { 
+            configValue.SetValue(value); 
+        }
+    );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+    return object;
+}
 
-#define AddConfigValueColorPicker(parent, colorConfigValue) \
-QuestUI::BeatSaberUI::CreateColorPicker(parent, colorConfigValue.GetName(), colorConfigValue.GetValue(), \
-    [](UnityEngine::Color value, GlobalNamespace::ColorChangeUIEventType eventType) { \
-        colorConfigValue.SetValue(value, eventType == GlobalNamespace::ColorChangeUIEventType::PointerUp); \
-    })
+inline ::UnityEngine::GameObject* AddConfigValueColorPicker(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
+    auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
+        [&configValue](::UnityEngine::Color value, ::GlobalNamespace::ColorChangeUIEventType eventType) {
+            configValue.SetValue(value, eventType == ::GlobalNamespace::ColorChangeUIEventType::PointerUp);
+        }
+    );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return object;
+}
+
 #define AddConfigValueIncrementVectorCoord(coord, name, parent, vectorConfigValue, decimal, increment) \
-QuestUI::BeatSaberUI::CreateIncrementSetting(parent, vectorConfigValue.GetName() + " " + #name, decimal, increment, vectorConfigValue.GetValue().coord, \
+::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, vectorConfigValue.GetName() + " " + #name, decimal, increment, vectorConfigValue.GetValue().coord, \
     [](float value) { \
         auto newValue = vectorConfigValue.GetValue(); \
         newValue.coord = value; \
