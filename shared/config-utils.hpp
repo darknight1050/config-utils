@@ -32,7 +32,7 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.3.0"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.3.1"});
         return *logger;
     }
     
@@ -307,8 +307,8 @@ VECTOR_LOAD(::UnityEngine::Color,
 #undef SIMPLE_VALUE
 #pragma endregion
 
-
 #ifdef HAS_CODEGEN
+#include "questui/shared/BeatSaberUI.hpp"
 inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](bool value) { 
@@ -342,6 +342,17 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(::UnityEngine::
     return object;
 }
 
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max) {
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
+        [&configValue](float value) {
+            configValue.SetValue(value); 
+        }
+    );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+    return object;
+}
+
 inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](std::string value) { 
@@ -353,6 +364,7 @@ inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transf
     return object;
 }
 
+#include "GlobalNamespace/ColorChangeUIEventType.hpp"
 inline ::UnityEngine::GameObject* AddConfigValueColorPicker(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](::UnityEngine::Color value, ::GlobalNamespace::ColorChangeUIEventType eventType) {
