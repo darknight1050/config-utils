@@ -40,7 +40,7 @@ LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.c)
 LOCAL_SHARED_LIBRARIES += beatsaber-hook_1_1_6
 LOCAL_SHARED_LIBRARIES += modloader
 LOCAL_LDLIBS += -llog 
-LOCAL_CFLAGS += -I"include" -I"shared" -I"./extern/libil2cpp/il2cpp/libil2cpp" -I"extern" -DVERSION='"0.0.1"'
-LOCAL_C_INCLUDES += ./include ./src 
+LOCAL_CFLAGS += -DVERSION='"0.0.1"'
+LOCAL_C_INCLUDES += ./include ./shared ./src ./extern ./extern/libil2cpp/il2cpp/libil2cpp ./extern/codegen/include
 LOCAL_CPP_FEATURES += exceptions
 include $(BUILD_SHARED_LIBRARY)
