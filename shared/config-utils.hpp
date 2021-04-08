@@ -15,10 +15,10 @@ struct name##_t { \
 }; \
 name##_t& get##name();
 
-#define DECLARE_VALUE(name, type, ...) \
+#define CONFIG_VALUE(name, type, ...) \
 ConfigUtils::ConfigValue<type> name = ConfigUtils::ConfigValue<type>(__VA_ARGS__);
 
-#define INIT_FUNCTION(impl) \
+#define CONFIG_INIT_FUNCTION(impl) \
 void Init(const ModInfo info) { \
     if(config) \
         delete config; \
@@ -26,13 +26,13 @@ void Init(const ModInfo info) { \
     config->Load(); \
     impl \
 }
-#define INIT_VALUE(name) \
+#define CONFIG_INIT_VALUE(name) \
 name.Init(config);
 
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.3.1"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.4.0"});
         return *logger;
     }
     

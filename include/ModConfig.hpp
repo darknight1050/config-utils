@@ -3,15 +3,15 @@
 
 DECLARE_CONFIG(ModConfig,
 
-    DECLARE_VALUE(SampleBool, bool, "SampleBool", true);
-    DECLARE_VALUE(SampleInt, int, "SampleInt", 1337);
-    DECLARE_VALUE(SampleFloat, float, "SampleFloat", 10.0f);
-    DECLARE_VALUE(SampleString, std::string, "SampleString", "hi");
+    CONFIG_VALUE(SampleBool, bool, "SampleBool", true);
+    CONFIG_VALUE(SampleInt, int, "SampleInt", 1337);
+    CONFIG_VALUE(SampleFloat, float, "SampleFloat", 10.0f);
+    CONFIG_VALUE(SampleString, std::string, "SampleString", "hi");
 
-    INIT_FUNCTION(
-        INIT_VALUE(SampleBool);
-        INIT_VALUE(SampleInt);
-        INIT_VALUE(SampleFloat);
-        INIT_VALUE(SampleString);
+    CONFIG_INIT_FUNCTION(
+        CONFIG_INIT_VALUE(SampleBool);
+        CONFIG_INIT_VALUE(SampleInt);
+        CONFIG_INIT_VALUE(SampleFloat);
+        CONFIG_INIT_VALUE(SampleString);
     )
 )
