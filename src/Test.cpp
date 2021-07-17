@@ -25,6 +25,11 @@ extern "C" void setup(ModInfo& info) {
 extern "C" void load() {
     il2cpp_functions::Init();
     //Access Config Values
+    getModConfig().SampleBool.AddChangeEvent(
+        [] (bool newValue) {
+            getLogger().info("SampleBool ValueChange: %d", newValue);
+        }
+    );
     getLogger().info("SampleBool: %d", getModConfig().SampleBool.GetValue());
     getLogger().info("SampleInt: %d", getModConfig().SampleInt.GetValue());
     getLogger().info("SampleFloat: %f", getModConfig().SampleFloat.GetValue());

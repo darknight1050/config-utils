@@ -91,7 +91,18 @@
 			"__functional_base_03": "cpp",
 			"filesystem": "cpp",
 			"future": "cpp",
-			"__memory": "cpp"
+			"__memory": "cpp",
+			"any": "cpp",
+			"concepts": "cpp",
+			"semaphore": "cpp",
+			"variant": "cpp",
+			"*.tcc": "cpp",
+			"memory_resource": "cpp",
+			"ranges": "cpp",
+			"shared_mutex": "cpp",
+			"span": "cpp",
+			"stop_token": "cpp",
+			"cfenv": "cpp"
 		}
 	}
 }

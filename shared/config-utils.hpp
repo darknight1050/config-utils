@@ -1,6 +1,8 @@
 #pragma once
 #include "beatsaber-hook/shared/utils/utils.h"
 #include "beatsaber-hook/shared/config/config-utils.hpp"
+#include <vector>
+#include <mutex>
 
 #define DEFINE_CONFIG(name) \
 name##_t& get##name() { \
@@ -32,7 +34,7 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.5.0"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.5.1"});
         return *logger;
     }
     
@@ -44,6 +46,8 @@ namespace ConfigUtils {
             ValueType defaultValue;
             std::string hoverHint;
             Configuration* config = nullptr;
+            std::vector<std::function<void(ValueType)>> changeEvents;
+            std::mutex changeEventsMutex;
 
         public:
             ConfigValue(std::string name, ValueType defaultValue) {
@@ -82,6 +86,10 @@ namespace ConfigUtils {
                 this->value = value;
                 if(save)
                     SaveValue();
+                std::lock_guard<std::mutex> lock(changeEventsMutex);
+                for (auto& event : changeEvents) {
+                    event(value);
+                }
             }
 
             ValueType GetDefaultValue() {
@@ -94,6 +102,16 @@ namespace ConfigUtils {
 
             std::string GetHoverHint() {
                 return hoverHint;
+            }
+
+            void AddChangeEvent(std::function<void(ValueType)> event) {
+                std::lock_guard<std::mutex> lock(changeEventsMutex);
+                changeEvents.push_back(event);
+            }
+
+            void RemoveChangeEvent(std::function<void(ValueType)> event) {
+                std::lock_guard<std::mutex> lock(changeEventsMutex);
+                changeEvents.erase(event);
             }
     };
    
