@@ -34,7 +34,7 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.5.1"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.6.0"});
         return *logger;
     }
     
