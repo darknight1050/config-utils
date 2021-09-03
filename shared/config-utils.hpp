@@ -373,8 +373,8 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(::UnityEngine:
 
 inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
-        [&configValue](std::string value) { 
-            configValue.SetValue(value); 
+        [&configValue](std::string_view value) { 
+            configValue.SetValue(value.data()); 
         }
     );
     if(!configValue.GetHoverHint().empty())
