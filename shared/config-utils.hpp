@@ -34,7 +34,7 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.7.1"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.7.2"});
         return *logger;
     }
     
@@ -373,8 +373,8 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(::UnityEngine:
 
 inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
-        [&configValue](StringW value) { 
-            configValue.SetValue(static_cast<std::string>(value).data()); 
+        [&configValue](StringW value) {
+            configValue.SetValue(static_cast<std::string>(value));
         }
     );
     if(!configValue.GetHoverHint().empty())
