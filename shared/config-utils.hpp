@@ -338,6 +338,18 @@ inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(::UnityEngine::Transform*
     return object;
 }
 
+inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
+            auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), 
+        [&configValue](bool value) { 
+            configValue.SetValue(value); 
+        }
+    );
+
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+    return object;
+        }
+
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
