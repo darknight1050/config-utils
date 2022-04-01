@@ -340,19 +340,19 @@ inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(::UnityEngine::Transform*
 
 
 inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
-            auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), 
+    auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](bool value) { 
             configValue.SetValue(value); 
         }
     );
-
     if(!configValue.GetHoverHint().empty())
         ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
     return object;
-        }
+}
 
 inline ::QuestUI::ModalColorPicker* AddConfigValueColorPickerModal(UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateColorPickerModal(parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr, [&configValue](::UnityEngine::Color value) {
+    auto object = ::QuestUI::BeatSaberUI::CreateColorPickerModal(parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr, 
+        [&configValue](::UnityEngine::Color value) {
             configValue.SetValue(value);
         }
     );
