@@ -102,7 +102,10 @@
 			"shared_mutex": "cpp",
 			"span": "cpp",
 			"stop_token": "cpp",
-			"cfenv": "cpp"
+			"cfenv": "cpp",
+			"xlocmon": "cpp",
+			"xlocnum": "cpp",
+			"xtr1common": "cpp"
 		}
 	}
 }

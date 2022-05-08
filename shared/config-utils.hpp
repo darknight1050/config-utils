@@ -34,7 +34,7 @@ name.Init(config);
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "0.7.2"});
+        static auto logger = new Logger(ModInfo{"config-utils", "0.7.3"});
         return *logger;
     }
     
@@ -350,17 +350,6 @@ inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(::UnityEngine::Tr
     return object;
 }
 
-inline ::QuestUI::ModalColorPicker* AddConfigValueColorPickerModal(UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateColorPickerModal(parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr, 
-        [&configValue](::UnityEngine::Color value) {
-            configValue.SetValue(value);
-        }
-    );
-    if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
-    return object;
-}
-
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
@@ -405,15 +394,14 @@ inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transf
     return object;
 }
 
-#include "GlobalNamespace/ColorChangeUIEventType.hpp"
-inline ::UnityEngine::GameObject* AddConfigValueColorPicker(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
+inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
-        [&configValue](::UnityEngine::Color value, ::GlobalNamespace::ColorChangeUIEventType eventType) {
-            configValue.SetValue(value, eventType == ::GlobalNamespace::ColorChangeUIEventType::PointerUp);
+        [&configValue](::UnityEngine::Color value) {
+            configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
     return object;
 }
 
