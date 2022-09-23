@@ -326,6 +326,8 @@ VECTOR_LOAD(::UnityEngine::Color,
 #pragma endregion
 
 #ifdef HAS_CODEGEN
+// Check if the questui header even exists
+#if __has_include("questui/shared/BeatSaberUI.hpp")
 #include "questui/shared/BeatSaberUI.hpp"
 inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), 
@@ -423,4 +425,5 @@ AddConfigValueIncrementVectorCoord(z, Z, parent, vectorConfigValue, decimal, inc
 #define AddConfigValueIncrementVector4(parent, vectorConfigValue, decimal, increment) \
 AddConfigValueIncrementVector3(parent, vectorConfigValue, decimal, increment); \
 AddConfigValueIncrementVectorCoord(w, W, parent, vectorConfigValue, decimal, increment);
+#endif
 #endif
