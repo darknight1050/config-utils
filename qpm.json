@@ -20,6 +20,11 @@
           "src/inline-hook"
         ]
       }
+    },
+    {
+      "id": "rapidjson-macros",
+      "versionRange": "^0.4.1",
+      "additionalData": {}
     }
   ],
   "additionalData": {}
