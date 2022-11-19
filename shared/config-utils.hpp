@@ -219,106 +219,182 @@ SPECIALIZATION(Color)
 #endif
 #pragma endregion
 
-#pragma region SimpleMacrosUndefine
-#ifdef HAS_CODEGEN
-// Check if the questui header even exists
+#pragma region QuestUI
 #if __has_include("questui/shared/BeatSaberUI.hpp")
 #include "questui/shared/BeatSaberUI.hpp"
-inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
+
+template<::QuestUI::HasTransform P>
+inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](bool value) { 
             configValue.SetValue(value); 
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-
-inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<bool>& configValue) {
+template<::QuestUI::HasTransform P>
+inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](bool value) { 
-            configValue.SetValue(value); 
+            configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
+inline void SetButtons(::QuestUI::IncrementSetting* increment) {
+    auto child = increment->get_gameObject()->get_transform()->GetChild(1);
+    auto decButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>().First();
+    auto incButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>().Last();
+    increment->OnValueChange = [oldFunc = std::move(increment->OnValueChange), increment, decButton, incButton](float value) {
+        oldFunc(value);
+        decButton->set_interactable(value > increment->MinValue || !increment->HasMin);
+        incButton->set_interactable(value < increment->MaxValue || !increment->HasMax);
+    };
+    decButton->set_interactable(increment->CurrentValue > increment->MinValue || !increment->HasMin);
+    incButton->set_interactable(increment->CurrentValue < increment->MaxValue || !increment->HasMax);
+    return increment;
+}
+
+template<::QuestUI::HasTransform P>
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(P parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
             configValue.SetValue((int)value); 
         }
     );
+    SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max) {
+template<::QuestUI::HasTransform P>
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(P parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
-            configValue.SetValue(value); 
+            configValue.SetValue(value);
         }
     );
+    SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max) {
+template<::QuestUI::HasTransform P>
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
-            configValue.SetValue(value); 
+            configValue.SetValue(value);
         }
     );
+    SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-inline ::HMUI::InputFieldView* AddConfigValueStringSetting(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<std::string>& configValue) {
+template<::QuestUI::HasTransform P>
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> enumStrings) {
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size());  
+    object->OnValueChange = [&configValue, object, enumStrings = std::move(enumStrings)](float value) {
+        configValue.SetValue((int) value);
+        object->Text->set_text(enumStrings[value]);
+    }
+    object->Text->set_text(enumStrings[inc->CurrentValue]);
+    SetButtons(object);
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return object;
+}
+
+template<::QuestUI::HasTransform P>
+inline ::HMUI::InputFieldView* AddConfigValueStringSetting(P parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(::UnityEngine::Transform* parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
+template<::QuestUI::HasTransform P>
+inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(P parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](::UnityEngine::Color value) {
             configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object->get_gameObject(), configValue.GetHoverHint());
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-#define AddConfigValueIncrementVectorCoord(coord, name, parent, vectorConfigValue, decimal, increment) \
-::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, vectorConfigValue.GetName() + " " + #name, decimal, increment, vectorConfigValue.GetValue().coord, \
-    [](float value) { \
-        auto newValue = vectorConfigValue.GetValue(); \
-        newValue.coord = value; \
-        vectorConfigValue.SetValue(newValue); \
-    })
-#define AddConfigValueIncrementVector2(parent, vectorConfigValue, decimal, increment) \
-AddConfigValueIncrementVectorCoord(x, X, parent, vectorConfigValue, decimal, increment); \
-AddConfigValueIncrementVectorCoord(y, Y, parent, vectorConfigValue, decimal, increment);
+template<::QuestUI::HasTransform P, class T>
+requires std::is_same_v<T, ::UnityEngine::Vector2> || std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
+inline std::array<::QuestUI::IncrementSetting*, 2> AddConfigValueIncrementVector2(P parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+    auto object1 = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x,
+        [&configValue](float value) {
+            auto newValue = configValue.GetValue();
+            newValue.x = value;
+            configValue.SetValue(newValue);
+        }
+    );
+    SetButtons(object1);
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object1, configValue.GetHoverHint());
+    auto object2 = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " Y", decimals, increment, configValue.GetValue().y,
+        [&configValue](float value) {
+            auto newValue = configValue.GetValue();
+            newValue.y = value;
+            configValue.SetValue(newValue);
+        }
+    );
+    SetButtons(object2);
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object2, configValue.GetHoverHint());
+    return {object1, object2};
+}
 
-#define AddConfigValueIncrementVector3(parent, vectorConfigValue, decimal, increment) \
-AddConfigValueIncrementVector2(parent, vectorConfigValue, decimal, increment); \
-AddConfigValueIncrementVectorCoord(z, Z, parent, vectorConfigValue, decimal, increment);
+template<class T>
+requires std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
+inline std::array<::QuestUI::IncrementSetting*, 3> AddConfigValueIncrementVector3(P parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+    auto objects = AddConfigValueIncrementVector2(parent, configValue, decimals, increment);
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " Z", decimals, increment, configValue.GetValue().z,
+        [&configValue](float value) { \
+            auto newValue = configValue.GetValue(); \
+            newValue.z = value; \
+            configValue.SetValue(newValue); \
+        }
+    );
+    SetButtons(object);
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return {objects[0], objects[1], object};
+}
 
-#define AddConfigValueIncrementVector4(parent, vectorConfigValue, decimal, increment) \
-AddConfigValueIncrementVector3(parent, vectorConfigValue, decimal, increment); \
-AddConfigValueIncrementVectorCoord(w, W, parent, vectorConfigValue, decimal, increment);
+inline std::array<::QuestUI::IncrementSetting*, 4> AddConfigValueIncrementVector4(P parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment) {
+    auto objects = AddConfigValueIncrementVector3(parent, configValue, decimals, increment);
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " W", decimals, increment, configValue.GetValue().w,
+        [&configValue](float value) { \
+            auto newValue = configValue.GetValue(); \
+            newValue.w = value; \
+            configValue.SetValue(newValue); \
+        }
+    );
+    SetButtons(object);
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return {objects[0], objects[1], objects[2], object};
+}
+
 #endif
-#endif
+#pragma endregion
