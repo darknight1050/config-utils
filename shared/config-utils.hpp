@@ -301,7 +301,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, Conf
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> enumStrings) {
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size());  
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);  
     object->OnValueChange = [&configValue, object, enumStrings](float value) {
         configValue.SetValue((int) value);
         object->Text->set_text(enumStrings[value]);
