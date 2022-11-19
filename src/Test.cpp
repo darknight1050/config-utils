@@ -11,9 +11,6 @@ Logger& getLogger() {
     return *logger;
 }
 
-//Define Config
-DEFINE_CONFIG(ModConfig);
-
 extern "C" void setup(ModInfo& info) {
     info.id = "config-utils-test";
     info.version = VERSION;
