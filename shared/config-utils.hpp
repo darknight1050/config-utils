@@ -303,7 +303,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, Conf
 template<::QuestUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> enumStrings) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size());  
-    object->OnValueChange = [&configValue, object, enumStrings = std::move(enumStrings)](float value) {
+    object->OnValueChange = [&configValue, object, enumStrings](float value) {
         configValue.SetValue((int) value);
         object->Text->set_text(enumStrings[value]);
     }
@@ -315,12 +315,45 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, Config
 }
 
 template<::QuestUI::HasTransform P>
-inline ::HMUI::InputFieldView* AddConfigValueStringSetting(P parent, ConfigUtils::ConfigValue<std::string>& configValue) {
+inline ::HMUI::InputFieldView* AddConfigValueInputString(P parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
     );
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return object;
+}
+
+template<::QuestUI::HasTransform P>
+inline ::HMUI::InputFieldView* AddConfigValueDropdownString(P parent, ConfigUtils::ConfigValue<std::string>& configValue, std::vector<std::string> dropdownStrings) {
+    std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
+    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(layout, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
+        [&configValue](StringW value) {
+            configValue.SetValue(static_cast<std::string>(value));
+        }
+    );
+    object->get_transform()->GetParent()->GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return object;
+}
+
+template<::QuestUI::HasTransform P>
+inline ::HMUI::InputFieldView* AddConfigValueDropdownEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> dropdownStrings) {
+    std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
+    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(layout, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
+        [&configValue, dropdownStrings](StringW value) {
+            for(int i = 0; i < dropdownStrings.size(); i++) {
+                if(value == dropdownStrings[i]) {
+                    configValue.SetValue(i);
+                    break;
+                }
+            }
+        }
+    );
+    object->get_transform()->GetParent()->GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
     if(!configValue.GetHoverHint().empty())
         ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
