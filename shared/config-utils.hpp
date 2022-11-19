@@ -223,7 +223,7 @@ SPECIALIZATION(Color)
 #if __has_include("questui/shared/BeatSaberUI.hpp")
 #include "questui/shared/BeatSaberUI.hpp"
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](bool value) { 
@@ -235,7 +235,7 @@ inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(P parent, ConfigUtils::Co
     return object;
 }
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](bool value) { 
@@ -258,10 +258,9 @@ inline void SetButtons(::QuestUI::IncrementSetting* increment) {
     };
     decButton->set_interactable(increment->CurrentValue > increment->MinValue || !increment->HasMin);
     incButton->set_interactable(increment->CurrentValue < increment->MaxValue || !increment->HasMax);
-    return increment;
 }
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(P parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
@@ -274,7 +273,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(P parent, ConfigU
     return object;
 }
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(P parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
@@ -287,7 +286,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(P parent, Confi
     return object;
 }
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
@@ -300,21 +299,21 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, Conf
     return object;
 }
 
-template<::QuestUI::HasTransform P>
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> enumStrings) {
+template<::QuestUI::BeatSaberUI::HasTransform P>
+inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> enumStrings) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size());  
     object->OnValueChange = [&configValue, object, enumStrings](float value) {
         configValue.SetValue((int) value);
         object->Text->set_text(enumStrings[value]);
-    }
-    object->Text->set_text(enumStrings[inc->CurrentValue]);
+    };
+    object->Text->set_text(enumStrings[object->CurrentValue]);
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
         ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::HMUI::InputFieldView* AddConfigValueInputString(P parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
         [&configValue](StringW value) {
@@ -326,24 +325,31 @@ inline ::HMUI::InputFieldView* AddConfigValueInputString(P parent, ConfigUtils::
     return object;
 }
 
-template<::QuestUI::HasTransform P>
-inline ::HMUI::InputFieldView* AddConfigValueDropdownString(P parent, ConfigUtils::ConfigValue<std::string>& configValue, std::vector<std::string> dropdownStrings) {
+template<::QuestUI::BeatSaberUI::HasTransform P>
+inline ::HMUI::InputFieldView* AddConfigValueDropdownString(P parent, ConfigUtils::ConfigValue<std::string>& configValue, const std::vector<std::string> dropdownStrings) {
+    int currentIndex = 0;
+    for(int i = 0; i < dropdownStrings.size(); i++) {
+        if(configValue.GetValue() == dropdownStrings[i]) {
+            currentIndex = i;
+            break;
+        }
+    }
     std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
-    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(layout, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
+    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(parent, configValue.GetName(), dropdownStringWs[currentIndex], dropdownStringWs,
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
     );
-    object->get_transform()->GetParent()->GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
+    object->get_transform()->GetParent()->template GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
     if(!configValue.GetHoverHint().empty())
         ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::HasTransform P>
-inline ::HMUI::InputFieldView* AddConfigValueDropdownEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> dropdownStrings) {
+template<::QuestUI::BeatSaberUI::HasTransform P>
+inline ::HMUI::InputFieldView* AddConfigValueDropdownEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> dropdownStrings) {
     std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
-    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(layout, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
+    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(parent, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
         [&configValue, dropdownStrings](StringW value) {
             for(int i = 0; i < dropdownStrings.size(); i++) {
                 if(value == dropdownStrings[i]) {
@@ -353,13 +359,13 @@ inline ::HMUI::InputFieldView* AddConfigValueDropdownEnum(P parent, ConfigUtils:
             }
         }
     );
-    object->get_transform()->GetParent()->GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
+    object->get_transform()->GetParent()->template GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
     if(!configValue.GetHoverHint().empty())
         ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::HasTransform P>
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(P parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
     auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](::UnityEngine::Color value) {
@@ -371,7 +377,7 @@ inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(P parent, ConfigUtils:
     return object;
 }
 
-template<::QuestUI::HasTransform P, class T>
+template<::QuestUI::BeatSaberUI::HasTransform P, class T>
 requires std::is_same_v<T, ::UnityEngine::Vector2> || std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
 inline std::array<::QuestUI::IncrementSetting*, 2> AddConfigValueIncrementVector2(P parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
     auto object1 = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x,
@@ -397,7 +403,7 @@ inline std::array<::QuestUI::IncrementSetting*, 2> AddConfigValueIncrementVector
     return {object1, object2};
 }
 
-template<class T>
+template<::QuestUI::BeatSaberUI::HasTransform P, class T>
 requires std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
 inline std::array<::QuestUI::IncrementSetting*, 3> AddConfigValueIncrementVector3(P parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector2(parent, configValue, decimals, increment);
@@ -414,6 +420,7 @@ inline std::array<::QuestUI::IncrementSetting*, 3> AddConfigValueIncrementVector
     return {objects[0], objects[1], object};
 }
 
+template<::QuestUI::BeatSaberUI::HasTransform P>
 inline std::array<::QuestUI::IncrementSetting*, 4> AddConfigValueIncrementVector4(P parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector3(parent, configValue, decimals, increment);
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " W", decimals, increment, configValue.GetValue().w,
