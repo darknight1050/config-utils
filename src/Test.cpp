@@ -4,6 +4,8 @@
 //Include the Config header
 #include "ModConfig.hpp"
 
+#include <sstream>
+
 static ModInfo modInfo;
 
 Logger& getLogger() {
@@ -31,8 +33,18 @@ extern "C" void load() {
     getLogger().info("SampleInt: %d", getModConfig().SampleInt.GetValue());
     getLogger().info("SampleFloat: %f", getModConfig().SampleFloat.GetValue());
     getLogger().info("SampleString: %s", getModConfig().SampleString.GetValue().c_str());
+    Subclass subclass = getModConfig().SampleSubclass.GetValue();
+    getLogger().info("SampleSubclass: SubDouble: %f, SubBool: %d", subclass.SubDouble, subclass.SubBool);
+    std::stringstream ss;
+    for(auto i : getModConfig().SampleVector.GetValue())
+        ss << i << " ";
+    getLogger().info("SampleVector: %s", ss.str().c_str());
     getModConfig().SampleBool.SetValue(false);
     getModConfig().SampleInt.SetValue(1);
     getModConfig().SampleFloat.SetValue(1337.0f);
     getModConfig().SampleString.SetValue("Changed");
+    Subclass newSubclass;
+    newSubclass.SubDouble = 1.414;
+    getModConfig().SampleSubclass.SetValue(newSubclass);
+    getModConfig().SampleVector.SetValue({1, 2, 3, 4});
 }
