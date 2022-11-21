@@ -19,6 +19,7 @@ DECLARE_JSON_CLASS(name##_t, \
         } catch (const std::exception& err) { \
             ConfigUtils::getLogger().error("Error reading config: %s (from %s)", err.what(), __config_path.c_str()); \
         } \
+		Save(); \
     } \
     static inline name##_t& GetInstance() { \
         return *__self_instance; \
