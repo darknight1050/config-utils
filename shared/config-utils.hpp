@@ -327,7 +327,7 @@ inline ::HMUI::InputFieldView* AddConfigValueInputString(P parent, ConfigUtils::
 }
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::HMUI::InputFieldView* AddConfigValueDropdownString(P parent, ConfigUtils::ConfigValue<std::string>& configValue, const std::vector<std::string> dropdownStrings) {
+inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownString(P parent, ConfigUtils::ConfigValue<std::string>& configValue, const std::vector<std::string> dropdownStrings) {
     int currentIndex = 0;
     for(int i = 0; i < dropdownStrings.size(); i++) {
         if(configValue.GetValue() == dropdownStrings[i]) {
@@ -348,7 +348,7 @@ inline ::HMUI::InputFieldView* AddConfigValueDropdownString(P parent, ConfigUtil
 }
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::HMUI::InputFieldView* AddConfigValueDropdownEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> dropdownStrings) {
+inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> dropdownStrings) {
     std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
     auto object = ::QuestUI::BeatSaberUI::CreateDropdown(parent, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
         [&configValue, dropdownStrings](StringW value) {
