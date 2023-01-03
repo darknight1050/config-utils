@@ -57,8 +57,8 @@ namespace ConfigUtils {
     struct Specialization {
         using JSONType = ValueType;
     };
-    
-    template <typename ValueType> 
+
+    template <typename ValueType>
     class ConfigValue {
         private:
             using JSONType = typename ConfigUtils::Specialization<ValueType>::JSONType;
@@ -226,9 +226,9 @@ SPECIALIZATION(Color)
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), 
-        [&configValue](bool value) { 
-            configValue.SetValue(value); 
+    auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(),
+        [&configValue](bool value) {
+            configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
@@ -238,8 +238,8 @@ inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(P parent, ConfigUtils::Co
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), 
-        [&configValue](bool value) { 
+    auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(),
+        [&configValue](bool value) {
             configValue.SetValue(value);
         }
     );
@@ -265,7 +265,7 @@ template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(P parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
-            configValue.SetValue((int)value); 
+            configValue.SetValue((int)value);
         }
     );
     SetButtons(object);
@@ -302,7 +302,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, Conf
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> enumStrings) {
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);  
+    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);
     object->OnValueChange = [&configValue, object, enumStrings](float value) {
         configValue.SetValue((int) value);
         object->Text->set_text(enumStrings[value]);
@@ -316,7 +316,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, Config
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::HMUI::InputFieldView* AddConfigValueInputString(P parent, ConfigUtils::ConfigValue<std::string>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), 
+    auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
