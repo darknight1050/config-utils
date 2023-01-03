@@ -23,7 +23,7 @@
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^0.4.1",
+      "versionRange": "^0.4.5",
       "additionalData": {}
     }
   ],
