@@ -368,7 +368,7 @@ inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownEnum(P parent, ConfigUt
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(P parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
+    auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent->get_transform(), configValue.GetName(), configValue.GetValue(), nullptr, nullptr,
         [&configValue](::UnityEngine::Color value) {
             configValue.SetValue(value);
         }
