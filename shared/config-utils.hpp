@@ -2,10 +2,10 @@
 #include "beatsaber-hook/shared/config/config-utils.hpp"
 #include "rapidjson-macros/shared/macros.hpp"
 
-#define DECLARE_CONFIG(name, impl) \
+#define DECLARE_CONFIG(name, ...) \
 DECLARE_JSON_CLASS(name##_t, \
     DISCARD_EXTRA_FIELDS \
-    impl \
+    __VA_ARGS__ \
     private: \
     static inline std::string __config_path = ""; \
     static inline name##_t* __self_instance = nullptr; \
@@ -49,7 +49,7 @@ ConfigUtils::ConfigValue<type> name = {&this->Save, &__##name, jsonName, def __V
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "1.0.2"});
+        static auto logger = new Logger(ModInfo{"config-utils", "1.1.0"});
         return *logger;
     }
 
