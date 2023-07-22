@@ -330,7 +330,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, Config
 
 template<::QuestUI::BeatSaberUI::HasTransform P, class V>
 requires (std::is_convertible_v<V, float>)
-inline ::QuestUI::IncrementSetting* AddConfigValueSlider(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max) {
+inline ::QuestUI::SliderSetting* AddConfigValueSlider(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max) {
     auto object = ::QuestUI::BeatSaberUI::CreateSliderSetting(parent, configValue.GetName(), increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
             configValue.SetValue(value);
@@ -344,7 +344,7 @@ inline ::QuestUI::IncrementSetting* AddConfigValueSlider(P parent, ConfigUtils::
 
 template<::QuestUI::BeatSaberUI::HasTransform P, class V>
 requires (std::is_convertible_v<V, float>)
-inline ::QuestUI::IncrementSetting* AddConfigValueSliderIncrement(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float buttonIncrement, float sliderIncrement, float min, float max) {
+inline ::QuestUI::SliderSetting* AddConfigValueSliderIncrement(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float buttonIncrement, float sliderIncrement, float min, float max) {
     auto object = AddConfigValueSlider(parent, configValue, decimals, sliderIncrement, min, max);
     AddSliderIncrement(object, buttonIncrement);
     return object;
