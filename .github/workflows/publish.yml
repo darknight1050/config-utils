@@ -30,8 +30,8 @@ jobs:
       id: get_tag_version
       run: |
         echo ${GITHUB_REF#refs/tags/}
-        echo TAG="${GITHUB_REF#refs/tags/}"" >> $GITHUB_OUTPUT
-        echo VERSION="${GITHUB_REF#refs/tags/v}"" >> $GITHUB_OUTPUT
+        echo TAG="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo VERSION="${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
     - name: QPM Action
       uses: Fernthedev/qpm-action@main
