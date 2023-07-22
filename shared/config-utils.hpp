@@ -2,10 +2,10 @@
 #include "beatsaber-hook/shared/config/config-utils.hpp"
 #include "rapidjson-macros/shared/macros.hpp"
 
-#define DECLARE_CONFIG(name, impl) \
+#define DECLARE_CONFIG(name, ...) \
 DECLARE_JSON_CLASS(name##_t, \
     DISCARD_EXTRA_FIELDS \
-    impl \
+    __VA_ARGS__ \
     private: \
     static inline std::string __config_path = ""; \
     static inline name##_t* __self_instance = nullptr; \
@@ -49,7 +49,7 @@ ConfigUtils::ConfigValue<type> name = {&this->Save, &__##name, jsonName, def __V
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "1.0.2"});
+        static auto logger = new Logger(ModInfo{"config-utils", "1.1.0"});
         return *logger;
     }
 
@@ -261,6 +261,20 @@ inline void SetButtons(::QuestUI::IncrementSetting* increment) {
     incButton->set_interactable(increment->CurrentValue < increment->MaxValue || !increment->HasMax);
 }
 
+inline void AddSliderIncrement(::QuestUI::SliderSetting* slider, float increment) {
+    auto transform = slider->slider->GetComponent<UnityEngine::RectTransform*>();
+    transform->set_anchoredPosition({-6, 0});
+
+    auto leftButton = ::QuestUI::BeatSaberUI::CreateUIButton(transform, "", "DecButton", {-22, 0}, {6, 8}, [slider = slider->slider, increment](){
+        float newValue = slider->get_value() - increment;
+        slider->SetNormalizedValue(slider->NormalizeValue(newValue));
+    });
+    auto rightButton = ::QuestUI::BeatSaberUI::CreateUIButton(transform, "", "IncButton", {22, 0}, {8, 8}, [slider = slider->slider, increment](){
+        float newValue = slider->get_value() + increment;
+        slider->SetNormalizedValue(slider->NormalizeValue(newValue));
+    });
+}
+
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(P parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
@@ -311,6 +325,28 @@ inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, Config
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
         ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return object;
+}
+
+template<::QuestUI::BeatSaberUI::HasTransform P, class V>
+requires (std::is_convertible_v<V, float>)
+inline ::QuestUI::SliderSetting* AddConfigValueSlider(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max) {
+    auto object = ::QuestUI::BeatSaberUI::CreateSliderSetting(parent, configValue.GetName(), increment, configValue.GetValue(), min, max,
+        [&configValue](float value) {
+            configValue.SetValue(value);
+        }
+    );
+    ((UnityEngine::RectTransform*) object->get_transform())->set_sizeDelta({0, 8});
+    if(!configValue.GetHoverHint().empty())
+        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+    return object;
+}
+
+template<::QuestUI::BeatSaberUI::HasTransform P, class V>
+requires (std::is_convertible_v<V, float>)
+inline ::QuestUI::SliderSetting* AddConfigValueSliderIncrement(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float buttonIncrement, float sliderIncrement, float min, float max) {
+    auto object = AddConfigValueSlider(parent, configValue, decimals, sliderIncrement, min, max);
+    AddSliderIncrement(object, buttonIncrement);
     return object;
 }
 
@@ -368,7 +404,7 @@ inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownEnum(P parent, ConfigUt
 
 template<::QuestUI::BeatSaberUI::HasTransform P>
 inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(P parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(),
+    auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent->get_transform(), configValue.GetName(), configValue.GetValue(), nullptr, nullptr,
         [&configValue](::UnityEngine::Color value) {
             configValue.SetValue(value);
         }
