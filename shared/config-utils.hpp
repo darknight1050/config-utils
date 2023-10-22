@@ -10,7 +10,7 @@ DECLARE_JSON_CLASS(name##_t, \
     static inline std::string __config_path = ""; \
     static inline name##_t* __self_instance = nullptr; \
     public: \
-    static void Init(const ModInfo info) { \
+    static void Init(const modloader::ModInfo info) { \
         __config_path = Configuration::getConfigFilePath(info); \
         if(!__self_instance) \
             __self_instance = new name##_t(); \
@@ -49,7 +49,7 @@ ConfigUtils::ConfigValue<type> name = {&this->Save, &__##name, jsonName, def __V
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(ModInfo{"config-utils", "1.1.0"});
+        static auto logger = new Logger(modloader::ModInfo{"config-utils", "1.1.0", 0});
         return *logger;
     }
 
