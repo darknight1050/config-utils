@@ -6,17 +6,20 @@
 
 #include <sstream>
 
-static ModInfo modInfo;
+static modloader::ModInfo modInfo = {"", VERSION, 0};
 
 Logger& getLogger() {
     static auto logger = new Logger(modInfo);
     return *logger;
 }
 
-extern "C" void setup(ModInfo& info) {
+extern "C" void setup(CModInfo& info) {
     info.id = "config-utils-test";
     info.version = VERSION;
-    modInfo = info;
+    info.version_long = 0;
+
+    modInfo.assign(info);
+
     //Init/Load Config
     getModConfig().Init(modInfo);
 }
