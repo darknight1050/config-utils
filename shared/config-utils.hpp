@@ -49,7 +49,7 @@ ConfigUtils::ConfigValue<type> name = {&this->Save, &__##name, jsonName, def __V
 namespace ConfigUtils {
 
     inline Logger& getLogger() {
-        static auto logger = new Logger(modloader::ModInfo{"config-utils", "1.2.0", 0});
+        static auto logger = new Logger(modloader::ModInfo{"config-utils", "1.3.0", 0});
         return *logger;
     }
 
@@ -60,69 +60,69 @@ namespace ConfigUtils {
 
     template <typename ValueType>
     class ConfigValue {
-        private:
-            using JSONType = typename ConfigUtils::Specialization<ValueType>::JSONType;
-            std::string name;
-            JSONType* value;
-            ValueType defaultValue;
-            std::string hoverHint;
-            void(*saveFunc)();
-            std::vector<std::function<void(ValueType)>> changeEvents;
-            std::mutex changeEventsMutex;
+    private:
+        using JSONType = typename ConfigUtils::Specialization<ValueType>::JSONType;
+        std::string name;
+        JSONType* value;
+        ValueType defaultValue;
+        std::string hoverHint;
+        void(*saveFunc)();
+        std::vector<std::function<void(ValueType)>> changeEvents;
+        std::mutex changeEventsMutex;
 
-        public:
-            bool operator==(const ConfigValue<ValueType>& other) const {
-                return *value == other.GetValue()
-                    && defaultValue == other.GetDefaultValue()
-                    && name == other.GetName()
-                    && hoverHint == other.GetHoverHint();
-            }
+    public:
+        bool operator==(const ConfigValue<ValueType>& other) const {
+            return *value == other.GetValue()
+                   && defaultValue == other.GetDefaultValue()
+                   && name == other.GetName()
+                   && hoverHint == other.GetHoverHint();
+        }
 
-            ConfigValue(void(*save)(), JSONType* ref, std::string name, ValueType defaultValue) {
-                this->saveFunc = save;
-                this->value = ref;
-                this->name = name;
-                this->defaultValue = defaultValue;
-            }
+        ConfigValue(void(*save)(), JSONType* ref, std::string name, ValueType defaultValue) {
+            this->saveFunc = save;
+            this->value = ref;
+            this->name = name;
+            this->defaultValue = defaultValue;
+        }
 
-            ConfigValue(void(*save)(), JSONType* ref, std::string name, ValueType defaultValue, std::string hoverHint) : ConfigValue(save, ref, name, defaultValue) {
-                this->hoverHint = hoverHint;
-            }
+        ConfigValue(void(*save)(), JSONType* ref, std::string name, ValueType defaultValue, std::string hoverHint) : ConfigValue(save, ref, name, defaultValue) {
+            this->hoverHint = hoverHint;
+        }
 
-            void SaveValue() {
-                saveFunc();
-            }
+        void SaveValue() {
+            saveFunc();
+        }
 
-            ValueType GetValue() {
-                return (ValueType) *value;
-            }
+        ValueType GetValue() {
+            return (ValueType) *value;
+        }
 
-            void SetValue(ValueType value, bool save = true) {
-                *this->value = value;
-                if(save)
-                    SaveValue();
-                std::lock_guard<std::mutex> lock(changeEventsMutex);
-                for (auto& event : changeEvents) {
-                    event(value);
-                }
+        void SetValue(ValueType value, bool save = true) {
+            *this->value = value;
+            if(save)
+                SaveValue();
+            std::lock_guard<std::mutex> lock(changeEventsMutex);
+            for (auto& event : changeEvents) {
+                event(value);
             }
+        }
 
-            ValueType GetDefaultValue() {
-                return defaultValue;
-            }
+        ValueType GetDefaultValue() {
+            return defaultValue;
+        }
 
-            std::string GetName() {
-                return name;
-            }
+        std::string GetName() {
+            return name;
+        }
 
-            std::string GetHoverHint() {
-                return hoverHint;
-            }
+        std::string GetHoverHint() {
+            return hoverHint;
+        }
 
-            void AddChangeEvent(std::function<void(ValueType)> event) {
-                std::lock_guard<std::mutex> lock(changeEventsMutex);
-                changeEvents.push_back(event);
-            }
+        void AddChangeEvent(std::function<void(ValueType)> event) {
+            std::lock_guard<std::mutex> lock(changeEventsMutex);
+            changeEvents.push_back(event);
+        }
     };
 }
 
@@ -220,150 +220,142 @@ SPECIALIZATION(Color)
 #endif
 #pragma endregion
 
-#pragma region QuestUI
-#if __has_include("questui/shared/BeatSaberUI.hpp")
-#include "questui/shared/BeatSaberUI.hpp"
+#pragma region BSML_LITE
+#if __has_include("BSML/shared/BSML-Lite.hpp")
+#include "BSML/shared/BSML-Lite.hpp"
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::UnityEngine::UI::Toggle* AddConfigValueToggle(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateToggle(parent, configValue.GetName(), configValue.GetValue(),
+inline BSML::ToggleSetting* AddConfigValueToggle(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
+    auto object = BSML::Lite::CreateToggle(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](bool value) {
             configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(P parent, ConfigUtils::ConfigValue<bool>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(),
+inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
+    auto object = BSML::Lite::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](bool value) {
             configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-inline void SetButtons(::QuestUI::IncrementSetting* increment) {
+inline void SetButtons(BSML::IncrementSetting* increment) {
     auto child = increment->get_gameObject()->get_transform()->GetChild(1);
-    auto decButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>().First();
-    auto incButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>().Last();
-    increment->OnValueChange = [oldFunc = std::move(increment->OnValueChange), increment, decButton, incButton](float value) {
+    auto decButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->First();
+    auto incButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->Last();
+    increment->onChange = [oldFunc = std::move(increment->onChange), increment, decButton, incButton](float value) {
         oldFunc(value);
-        decButton->set_interactable(value > increment->MinValue || !increment->HasMin);
-        incButton->set_interactable(value < increment->MaxValue || !increment->HasMax);
+        decButton->set_interactable(value > increment->minValue);
+        incButton->set_interactable(value < increment->maxValue);
     };
-    decButton->set_interactable(increment->CurrentValue > increment->MinValue || !increment->HasMin);
-    incButton->set_interactable(increment->CurrentValue < increment->MaxValue || !increment->HasMax);
+    decButton->set_interactable(increment->currentValue > increment->minValue);
+    incButton->set_interactable(increment->currentValue < increment->maxValue);
 }
 
-inline void AddSliderIncrement(::QuestUI::SliderSetting* slider, float increment) {
+inline void AddSliderIncrement(BSML::SliderSetting* slider, float increment) {
     auto transform = slider->slider->GetComponent<UnityEngine::RectTransform*>();
     transform->set_anchoredPosition({-6, 0});
 
-    auto leftButton = ::QuestUI::BeatSaberUI::CreateUIButton(transform, "", "DecButton", {-22, 0}, {6, 8}, [slider = slider->slider, increment](){
+    auto leftButton = BSML::Lite::CreateUIButton(transform, "", "DecButton", {-22, 0}, {6, 8}, [slider = slider->slider, increment](){
         float newValue = slider->get_value() - increment;
         slider->SetNormalizedValue(slider->NormalizeValue(newValue));
     });
-    auto rightButton = ::QuestUI::BeatSaberUI::CreateUIButton(transform, "", "IncButton", {22, 0}, {8, 8}, [slider = slider->slider, increment](){
+    auto rightButton = BSML::Lite::CreateUIButton(transform, "", "IncButton", {22, 0}, {8, 8}, [slider = slider->slider, increment](){
         float newValue = slider->get_value() + increment;
         slider->SetNormalizedValue(slider->NormalizeValue(newValue));
     });
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementInt(P parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
+inline BSML::IncrementSetting* AddConfigValueIncrementInt(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
+    auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
             configValue.SetValue((int)value);
         }
     );
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementFloat(P parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max) {
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
+inline BSML::IncrementSetting* AddConfigValueIncrementFloat(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max) {
+    auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
             configValue.SetValue(value);
         }
     );
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementDouble(P parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max) {
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
+inline BSML::IncrementSetting* AddConfigValueIncrementDouble(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max) {
+    auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
             configValue.SetValue(value);
         }
     );
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::QuestUI::IncrementSetting* AddConfigValueIncrementEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> enumStrings) {
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);
-    object->OnValueChange = [&configValue, object, enumStrings](float value) {
+inline BSML::IncrementSetting* AddConfigValueIncrementEnum(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> enumStrings) {
+    auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);
+    object->onChange = [&configValue, object, enumStrings](float value) {
         configValue.SetValue((int) value);
-        object->Text->set_text(enumStrings[value]);
+        object->text->set_text(enumStrings[value]);
     };
-    object->Text->set_text(enumStrings[object->CurrentValue]);
+    object->text->set_text(enumStrings[object->currentValue]);
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P, class V>
+template<class V>
 requires (std::is_convertible_v<V, float>)
-inline ::QuestUI::SliderSetting* AddConfigValueSlider(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max) {
-    auto object = ::QuestUI::BeatSaberUI::CreateSliderSetting(parent, configValue.GetName(), increment, configValue.GetValue(), min, max,
+inline BSML::SliderSetting* AddConfigValueSlider(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max) {
+    auto object = BSML::Lite::CreateSliderSetting(parent, configValue.GetName(), increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
             configValue.SetValue(value);
         }
     );
     ((UnityEngine::RectTransform*) object->get_transform())->set_sizeDelta({0, 8});
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P, class V>
+template<class V>
 requires (std::is_convertible_v<V, float>)
-inline ::QuestUI::SliderSetting* AddConfigValueSliderIncrement(P parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float buttonIncrement, float sliderIncrement, float min, float max) {
+inline BSML::SliderSetting* AddConfigValueSliderIncrement(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float buttonIncrement, float sliderIncrement, float min, float max) {
     auto object = AddConfigValueSlider(parent, configValue, decimals, sliderIncrement, min, max);
     AddSliderIncrement(object, buttonIncrement);
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::HMUI::InputFieldView* AddConfigValueInputString(P parent, ConfigUtils::ConfigValue<std::string>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(),
+inline ::HMUI::InputFieldView* AddConfigValueInputString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue) {
+    auto object = BSML::Lite::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(),
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownString(P parent, ConfigUtils::ConfigValue<std::string>& configValue, const std::vector<std::string> dropdownStrings) {
+inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string> dropdownStrings) {
     int currentIndex = 0;
     for(int i = 0; i < dropdownStrings.size(); i++) {
         if(configValue.GetValue() == dropdownStrings[i]) {
@@ -371,22 +363,21 @@ inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownString(P parent, Config
             break;
         }
     }
-    std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
-    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(parent, configValue.GetName(), dropdownStringWs[currentIndex], dropdownStringWs,
+
+    auto currentValue = *(dropdownStrings.begin() + currentIndex);
+    auto object = BSML::Lite::CreateDropdown(parent, configValue.GetName(), currentValue, dropdownStrings,
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
     );
     object->get_transform()->GetParent()->template GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownEnum(P parent, ConfigUtils::ConfigValue<int>& configValue, const std::vector<std::string> dropdownStrings) {
-    std::vector<StringW> dropdownStringWs(dropdownStrings.begin(), dropdownStrings.end());
-    auto object = ::QuestUI::BeatSaberUI::CreateDropdown(parent, configValue.GetName(), dropdownStringWs[configValue.GetValue()], dropdownStringWs,
+inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, const std::span<std::string> dropdownStrings) {
+    auto object = BSML::Lite::CreateDropdown(parent, configValue.GetName(), dropdownStrings[configValue.GetValue()], dropdownStrings,
         [&configValue, dropdownStrings](StringW value) {
             for(int i = 0; i < dropdownStrings.size(); i++) {
                 if(value == dropdownStrings[i]) {
@@ -398,26 +389,25 @@ inline ::HMUI::SimpleTextDropdown* AddConfigValueDropdownEnum(P parent, ConfigUt
     );
     object->get_transform()->GetParent()->template GetComponent<::UnityEngine::UI::LayoutElement*>()->set_preferredHeight(7);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline ::QuestUI::ColorSetting* AddConfigValueColorPicker(P parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
-    auto object = ::QuestUI::BeatSaberUI::CreateColorPicker(parent->get_transform(), configValue.GetName(), configValue.GetValue(), nullptr, nullptr,
+inline BSML::ColorSetting* AddConfigValueColorPicker(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
+    auto object = BSML::Lite::CreateColorPicker(parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr,
         [&configValue](::UnityEngine::Color value) {
             configValue.SetValue(value);
         }
     );
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P, class T>
+template<class T>
 requires std::is_same_v<T, ::UnityEngine::Vector2> || std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
-inline std::array<::QuestUI::IncrementSetting*, 2> AddConfigValueIncrementVector2(P parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
-    auto object1 = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x,
+inline std::array<BSML::IncrementSetting*, 2> AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+    auto object1 = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x,
         [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.x = value;
@@ -426,8 +416,8 @@ inline std::array<::QuestUI::IncrementSetting*, 2> AddConfigValueIncrementVector
     );
     SetButtons(object1);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object1, configValue.GetHoverHint());
-    auto object2 = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " Y", decimals, increment, configValue.GetValue().y,
+        BSML::Lite::AddHoverHint(object1, configValue.GetHoverHint());
+    auto object2 = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName() + " Y", decimals, increment, configValue.GetValue().y,
         [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.y = value;
@@ -436,15 +426,15 @@ inline std::array<::QuestUI::IncrementSetting*, 2> AddConfigValueIncrementVector
     );
     SetButtons(object2);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object2, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object2, configValue.GetHoverHint());
     return {object1, object2};
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P, class T>
+template<class T>
 requires std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
-inline std::array<::QuestUI::IncrementSetting*, 3> AddConfigValueIncrementVector3(P parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+inline std::array<BSML::IncrementSetting*, 3> AddConfigValueIncrementVector3(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector2(parent, configValue, decimals, increment);
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " Z", decimals, increment, configValue.GetValue().z,
+    auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName() + " Z", decimals, increment, configValue.GetValue().z,
         [&configValue](float value) { \
             auto newValue = configValue.GetValue(); \
             newValue.z = value; \
@@ -453,14 +443,13 @@ inline std::array<::QuestUI::IncrementSetting*, 3> AddConfigValueIncrementVector
     );
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return {objects[0], objects[1], object};
 }
 
-template<::QuestUI::BeatSaberUI::HasTransform P>
-inline std::array<::QuestUI::IncrementSetting*, 4> AddConfigValueIncrementVector4(P parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment) {
+inline std::array<::BSML::IncrementSetting*, 4> AddConfigValueIncrementVector4(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector3(parent, configValue, decimals, increment);
-    auto object = ::QuestUI::BeatSaberUI::CreateIncrementSetting(parent, configValue.GetName() + " W", decimals, increment, configValue.GetValue().w,
+    auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName() + " W", decimals, increment, configValue.GetValue().w,
         [&configValue](float value) { \
             auto newValue = configValue.GetValue(); \
             newValue.w = value; \
@@ -469,7 +458,7 @@ inline std::array<::QuestUI::IncrementSetting*, 4> AddConfigValueIncrementVector
     );
     SetButtons(object);
     if(!configValue.GetHoverHint().empty())
-        ::QuestUI::BeatSaberUI::AddHoverHint(object, configValue.GetHoverHint());
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return {objects[0], objects[1], objects[2], object};
 }
 

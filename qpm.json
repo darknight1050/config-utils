@@ -15,7 +15,7 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^4.0.0",
+      "versionRange": "^5.0.0",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -24,7 +24,7 @@
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^1.1.0",
+      "versionRange": "^1.2.0",
       "additionalData": {}
     }
   ],
