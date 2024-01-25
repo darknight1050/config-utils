@@ -355,7 +355,7 @@ inline ::HMUI::InputFieldView* AddConfigValueInputString(const BSML::Lite::Trans
     return object;
 }
 
-inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string> dropdownStrings) {
+inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string_view> dropdownStrings) {
     int currentIndex = 0;
     for(int i = 0; i < dropdownStrings.size(); i++) {
         if(configValue.GetValue() == dropdownStrings[i]) {
@@ -376,7 +376,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite:
     return object;
 }
 
-inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, const std::span<std::string> dropdownStrings) {
+inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, const std::span<std::string_view> dropdownStrings) {
     auto object = BSML::Lite::CreateDropdown(parent, configValue.GetName(), dropdownStrings[configValue.GetValue()], dropdownStrings,
         [&configValue, dropdownStrings](StringW value) {
             for(int i = 0; i < dropdownStrings.size(); i++) {
