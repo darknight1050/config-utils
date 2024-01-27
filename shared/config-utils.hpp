@@ -223,6 +223,7 @@ SPECIALIZATION(Color)
 #pragma region BSML_LITE
 #if __has_include("BSML/shared/BSML-Lite.hpp")
 #include "BSML/shared/BSML-Lite.hpp"
+#include "UnityEngine/UI/LayoutElement.hpp"
 
 inline BSML::ToggleSetting* AddConfigValueToggle(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = BSML::Lite::CreateToggle(parent, configValue.GetName(), configValue.GetValue(),
