@@ -260,20 +260,6 @@ inline void SetButtons(BSML::IncrementSetting* increment) {
     incButton->set_interactable(increment->currentValue < increment->maxValue);
 }
 
-inline void AddSliderIncrement(BSML::SliderSetting* slider, float increment) {
-    auto transform = slider->slider->GetComponent<UnityEngine::RectTransform*>();
-    transform->set_anchoredPosition({-6, 0});
-
-    auto leftButton = BSML::Lite::CreateUIButton(transform, "", "DecButton", {-22, 0}, {6, 8}, [slider = slider->slider, increment](){
-        float newValue = slider->get_value() - increment;
-        slider->SetNormalizedValue(slider->NormalizeValue(newValue));
-    });
-    auto rightButton = BSML::Lite::CreateUIButton(transform, "", "IncButton", {22, 0}, {8, 8}, [slider = slider->slider, increment](){
-        float newValue = slider->get_value() + increment;
-        slider->SetNormalizedValue(slider->NormalizeValue(newValue));
-    });
-}
-
 inline BSML::IncrementSetting* AddConfigValueIncrementInt(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
     auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max,
         [&configValue](float value) {
@@ -331,7 +317,7 @@ inline BSML::SliderSetting* AddConfigValueSlider(const BSML::Lite::TransformWrap
             configValue.SetValue(value);
         }
     );
-    ((UnityEngine::RectTransform*) object->get_transform())->set_sizeDelta({0, 8});
+    object->get_transform().template cast<UnityEngine::RectTransform>()->set_sizeDelta({0, 8});
     if(!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
@@ -339,9 +325,14 @@ inline BSML::SliderSetting* AddConfigValueSlider(const BSML::Lite::TransformWrap
 
 template<class V>
 requires (std::is_convertible_v<V, float>)
-inline BSML::SliderSetting* AddConfigValueSliderIncrement(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float buttonIncrement, float sliderIncrement, float min, float max) {
-    auto object = AddConfigValueSlider(parent, configValue, decimals, sliderIncrement, min, max);
-    AddSliderIncrement(object, buttonIncrement);
+inline BSML::SliderSetting* AddConfigValueSliderIncrement(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, float increment, float min, float max) {
+    auto object = BSML::Lite::CreateSliderSetting(parent, configValue.GetName(), increment, configValue.GetValue(), min, max, 1, true, {},
+          [&configValue](float value) {
+              configValue.SetValue(value);
+          }
+    );
+    if(!configValue.GetHoverHint().empty())
+        BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
@@ -356,7 +347,7 @@ inline ::HMUI::InputFieldView* AddConfigValueInputString(const BSML::Lite::Trans
     return object;
 }
 
-inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string_view> dropdownStrings) {
+inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, const std::span<std::string_view> dropdownStrings) {
     int currentIndex = 0;
     for(int i = 0; i < dropdownStrings.size(); i++) {
         if(configValue.GetValue() == dropdownStrings[i]) {
@@ -365,8 +356,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite:
         }
     }
 
-    auto currentValue = *(dropdownStrings.begin() + currentIndex);
-    auto object = BSML::Lite::CreateDropdown(parent, configValue.GetName(), currentValue, dropdownStrings,
+    auto object = BSML::Lite::CreateDropdown(parent, configValue.GetName(), dropdownStrings[currentIndex], dropdownStrings,
         [&configValue](StringW value) {
             configValue.SetValue(static_cast<std::string>(value));
         }
