@@ -369,7 +369,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownString(const BSML::Lite:
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, const std::span<std::string_view> dropdownStrings) {
     auto object = BSML::Lite::CreateDropdown(parent, configValue.GetName(), dropdownStrings[configValue.GetValue()], dropdownStrings,
-        [&configValue, dropdownStrings](StringW value) {
+        [&configValue, dropdownStrings = std::vector<std::string>(dropdownStrings.begin(), dropdownStrings.end())](StringW value) {
             for(int i = 0; i < dropdownStrings.size(); i++) {
                 if(value == dropdownStrings[i]) {
                     configValue.SetValue(i);
