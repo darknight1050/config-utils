@@ -6,7 +6,7 @@
 
 #include <sstream>
 
-static modloader::ModInfo modInfo = {"", VERSION, 0};
+static modloader::ModInfo modInfo = {MOD_ID, VERSION, 0};
 
 extern "C" void setup(CModInfo& info) {
     info.id = "config-utils-test";
