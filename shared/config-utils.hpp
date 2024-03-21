@@ -48,7 +48,7 @@ public: \
 ConfigUtils::ConfigValue<type> name = {&this->Save, &__##name, jsonName, def __VA_OPT__(,) __VA_ARGS__};
 
 namespace ConfigUtils {
-    auto Logger = Paper::ConstLoggerContext("config-utils");
+    static constexpr auto Logger = Paper::ConstLoggerContext("config-utils");
 
     template <typename ValueType>
     struct Specialization {
