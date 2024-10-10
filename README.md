@@ -1,4 +1,8 @@
 # ConfigUtils
+\
+## Local Test
+
+Make sure gcc is on path and VCPKG_ROOT is set. Run `vcpkg install rapidjson fmt` and optionally update the path in `local.ps1` if needed. Then run `local.ps1` and `test.ps1`.
 
 ## Credits
 
