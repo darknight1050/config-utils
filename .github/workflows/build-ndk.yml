@@ -29,14 +29,12 @@ jobs:
         cat ${GITHUB_WORKSPACE}/ndkpath.txt
 
     - name: QPM Action
-      uses: Fernthedev/qpm-action@main
+      uses: Fernthedev/qpm-action@v1
       with:
         workflow_token: ${{ secrets.GITHUB_TOKEN }}
 
         restore: true
         cache: true
-
-        publish: false
 
     - name: List Post Restore
       run: |
@@ -59,14 +57,14 @@ jobs:
         echo NAME="${files[0]}" >> $GITHUB_OUTPUT
 
     - name: Upload non-debug artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.libname.outputs.NAME }}
         path: ./build/${{ steps.libname.outputs.NAME }}
         if-no-files-found: error
 
     - name: Upload debug artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: debug_${{ steps.libname.outputs.NAME }}
         path: ./build/debug/${{ steps.libname.outputs.NAME }}

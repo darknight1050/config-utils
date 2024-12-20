@@ -6,10 +6,10 @@ param (
 )
 
 & ./build.ps1
-if ($useDebug.IsPresent) {
-    & adb push build/debug/libconfig-utils_tests.so /sdcard/Android/data/com.beatgames.beatsaber/files/libs/libconfig-utils_test.so
+if ($useDebug -eq $true) {
+    & adb push build/debug/libconfig-utils_test.so /sdcard/ModData/com.beatgames.beatsaber/Modloader/early_mods/libconfig-utils_test.so
 } else {
-    & adb push build/libconfig-utils_test.so /sdcard/Android/data/com.beatgames.beatsaber/files/libs/libconfig-utils_test.so
+    & adb push build/libconfig-utils_test.so /sdcard/ModData/com.beatgames.beatsaber/Modloader/early_mods/libconfig-utils_test.so
 }
 
 & adb shell am force-stop com.beatgames.beatsaber
