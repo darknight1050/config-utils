@@ -6,7 +6,7 @@
 #include "paper.hpp"
 #else
 #include "beatsaber-hook/shared/config/config-utils.hpp"
-#include "paper/shared/logger.hpp"
+#include "paper2_scotland2/shared/logger.hpp"
 #include "rapidjson-macros/shared/macros.hpp"
 #endif
 

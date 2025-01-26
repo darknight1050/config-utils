@@ -5,7 +5,7 @@
   "info": {
     "name": "config-utils",
     "id": "config-utils",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
       "headersOnly": true,
@@ -14,12 +14,15 @@
     }
   },
   "workspace": {
-    "scripts": {}
+    "scripts": {},
+    "qmodIncludeDirs": [],
+    "qmodIncludeFiles": [],
+    "qmodOutput": null
   },
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": ">=5.0.0<7.0.0",
+      "versionRange": "^6.0.0",
       "additionalData": {}
     },
     {
@@ -28,8 +31,8 @@
       "additionalData": {}
     },
     {
-      "id": "paper",
-      "versionRange": "^3.6.1",
+      "id": "paper2_scotland2",
+      "versionRange": "^4.4.2",
       "additionalData": {}
     }
   ]
