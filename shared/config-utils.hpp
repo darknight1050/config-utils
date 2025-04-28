@@ -10,6 +10,8 @@
 #include "rapidjson-macros/shared/macros.hpp"
 #endif
 
+#include <mutex>
+
 #define DECLARE_CONFIG(name) \
 struct name##_t; \
 inline name##_t& get##name() { \
@@ -144,37 +146,37 @@ clazz& operator=(const UnityEngine::clazz& other) { construct; return *this; } \
 operator UnityEngine::clazz() const { return UnityEngine::clazz convert; }
 
     DECLARE_JSON_STRUCT(Vector2) {
-        VALUE(float, x);
-        VALUE(float, y);
+        NAMED_VALUE(float, x, NAME_OPTS("x", "X"));
+        NAMED_VALUE(float, y, NAME_OPTS("y", "Y"));
         CONVERSION(Vector2, x = other.x; y = other.y;, (x, y));
         Vector2() = default;
         Vector2(float x, float y) : x(x), y(y) {}
     };
 
     DECLARE_JSON_STRUCT(Vector3) {
-        VALUE(float, x);
-        VALUE(float, y);
-        VALUE(float, z);
+        NAMED_VALUE(float, x, NAME_OPTS("x", "X"));
+        NAMED_VALUE(float, y, NAME_OPTS("y", "Y"));
+        NAMED_VALUE(float, z, NAME_OPTS("z", "Z"));
         CONVERSION(Vector3, x = other.x; y = other.y; z = other.z;, (x, y, z));
         Vector3() = default;
         Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
     };
 
     DECLARE_JSON_STRUCT(Vector4) {
-        VALUE(float, x);
-        VALUE(float, y);
-        VALUE(float, z);
-        VALUE(float, w);
+        NAMED_VALUE(float, x, NAME_OPTS("x", "X"));
+        NAMED_VALUE(float, y, NAME_OPTS("y", "Y"));
+        NAMED_VALUE(float, z, NAME_OPTS("z", "Z"));
+        NAMED_VALUE(float, w, NAME_OPTS("w", "W"));
         CONVERSION(Vector4, x = other.x; y = other.y; z = other.z; w = other.w;, (x, y, z, w));
         Vector4() = default;
         Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
     };
 
     DECLARE_JSON_STRUCT(Color) {
-        VALUE(float, r);
-        VALUE(float, g);
-        VALUE(float, b);
-        VALUE(float, a);
+        NAMED_VALUE(float, r, NAME_OPTS("r", "R"));
+        NAMED_VALUE(float, g, NAME_OPTS("g", "G"));
+        NAMED_VALUE(float, b, NAME_OPTS("b", "B"));
+        NAMED_VALUE(float, a, NAME_OPTS("a", "A"));
         CONVERSION(Color, r = other.r; g = other.g; b = other.b; a = other.a;, (r, g, b, a));
         Color() = default;
         Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
