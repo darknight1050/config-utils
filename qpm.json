@@ -1,11 +1,12 @@
 {
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.schema.json",
   "version": "0.1.0",
   "sharedDir": "shared",
   "dependenciesDir": "extern",
   "info": {
     "name": "config-utils",
     "id": "config-utils",
-    "version": "2.0.3",
+    "version": "2.1.0",
     "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
       "headersOnly": true,
@@ -15,6 +16,7 @@
   },
   "workspace": {
     "scripts": {},
+    "ndk": "^27.3.13750724",
     "qmodIncludeDirs": [],
     "qmodIncludeFiles": [],
     "qmodOutput": null
@@ -22,12 +24,12 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^6.0.0",
+      "versionRange": "^7.4.0",
       "additionalData": {}
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^2.0.0",
+      "versionRange": "^2.2.0",
       "additionalData": {}
     },
     {
