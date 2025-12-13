@@ -29,7 +29,7 @@
     },
     {
       "id": "rapidjson-macros",
-      "versionRange": "^2.2.0",
+      "versionRange": "3.0.0",
       "additionalData": {}
     },
     {
