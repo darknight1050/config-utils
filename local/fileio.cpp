@@ -1,10 +1,9 @@
 #include "fileio.hpp"
 
-#include <unistd.h>
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
 
 std::string readfile(std::string_view filename) {
     std::ifstream t(filename.data());

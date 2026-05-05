@@ -6,7 +6,7 @@
   "info": {
     "name": "config-utils",
     "id": "config-utils",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
       "headersOnly": true,
@@ -17,17 +17,17 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^7.4.0",
-      "additionalData": {}
-    },
-    {
-      "id": "rapidjson-macros",
-      "versionRange": "3.0.0",
+      "versionRange": "^8.0.0",
       "additionalData": {}
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.4.2",
+      "versionRange": "^4.7.0",
+      "additionalData": {}
+    },
+    {
+      "id": "rapidjson-macros",
+      "versionRange": "^3.0.1",
       "additionalData": {}
     }
   ]

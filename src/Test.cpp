@@ -1,4 +1,4 @@
-//Include the Config header
+// Include the Config header
 #include "ModConfig.hpp"
 
 #include <sstream>
@@ -14,17 +14,13 @@ extern "C" void setup(CModInfo& info) {
 
     modInfo.assign(info);
 
-    //Init/Load Config
+    // Init/Load Config
     getModConfig().Init(modInfo);
 }
 
 extern "C" void load() {
-    //Access Config Values
-    getModConfig().SampleBool.AddChangeEvent(
-        [] (bool newValue) {
-            ConfigUtils::Logger.info("SampleBool ValueChange: {}", newValue);
-        }
-    );
+    // Access Config Values
+    getModConfig().SampleBool.AddChangeEvent([](bool newValue) { ConfigUtils::Logger.info("SampleBool ValueChange: {}", newValue); });
     ConfigUtils::Logger.info("SampleBool: {}", getModConfig().SampleBool.GetValue());
     ConfigUtils::Logger.info("SampleInt: {}", getModConfig().SampleInt.GetValue());
     ConfigUtils::Logger.info("SampleFloat: {}", getModConfig().SampleFloat.GetValue());
@@ -32,7 +28,7 @@ extern "C" void load() {
     Subclass subclass = getModConfig().SampleSubclass.GetValue();
     ConfigUtils::Logger.info("SampleSubclass: SubDouble: {}, SubBool: {}", subclass.SubDouble, subclass.SubBool);
     std::stringstream ss;
-    for(auto i : getModConfig().SampleVector.GetValue())
+    for (auto i : getModConfig().SampleVector.GetValue())
         ss << i << " ";
     ConfigUtils::Logger.info("SampleVector: {}", ss.str().c_str());
     getModConfig().SampleBool.SetValue(false);

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <fmt/core.h>
-
 #include <iostream>
+#include <fmt/core.h>
 
 namespace Paper {
     enum class LogLevel : uint8_t { DBG = 3, INF = 4, WRN = 5, ERR = 6, CRIT = 7, OFF = 0 };

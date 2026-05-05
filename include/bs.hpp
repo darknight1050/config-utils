@@ -1,8 +1,8 @@
 #pragma once
 
-#include <string>
-
 #include "config-utils.hpp"
+
+#include <string>
 
 namespace modloader {
     struct ModInfo {

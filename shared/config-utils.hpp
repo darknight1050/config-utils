@@ -1,14 +1,8 @@
 #pragma once
 
-#ifdef CONFIG_UTILS_GCC_TEST
-#include "bs.hpp"
-#include "macros.hpp"
-#include "paper.hpp"
-#else
-#include "beatsaber-hook/shared/config/config-utils.hpp"
+#include "beatsaber-hook/shared/utils.hpp"
 #include "paper2_scotland2/shared/logger.hpp"
 #include "rapidjson-macros/shared/macros.hpp"
-#endif
 
 #include <mutex>
 
@@ -40,8 +34,8 @@ namespace ConfigUtils {
         static inline T* __self_instance = nullptr;
 
        public:
-        static void Init(modloader::ModInfo const info) {
-            __config_path = Configuration::getConfigFilePath(info);
+        static void Init(modloader::ModInfo const& info) {
+            __config_path = get_config_path(info);
             try {
                 ReadFromFile(__config_path, GetInstance());
             } catch (std::exception const& err) {
@@ -212,10 +206,11 @@ struct Specialization<std::vector<UnityEngine::type>> { \
 
 #pragma region BSML_LITE
 #if __has_include("bsml/shared/BSML-Lite.hpp")
-#include "UnityEngine/UI/LayoutElement.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
 
-inline BSML::ToggleSetting* AddConfigValueToggle(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
+#include "UnityEngine/UI/LayoutElement.hpp"
+
+inline BSML::ToggleSetting* AddConfigValueToggle(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object =
         BSML::Lite::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), [&configValue](bool value) { configValue.SetValue(value); });
     if (!configValue.GetHoverHint().empty())
@@ -224,7 +219,7 @@ inline BSML::ToggleSetting* AddConfigValueToggle(const BSML::Lite::TransformWrap
 }
 
 inline ::UnityEngine::UI::Toggle*
-AddConfigValueModifierButton(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
+AddConfigValueModifierButton(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<bool>& configValue) {
     auto object = BSML::Lite::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), [&configValue](bool value) {
         configValue.SetValue(value);
     });
@@ -247,11 +242,12 @@ inline void SetButtons(BSML::IncrementSetting* increment) {
 }
 
 inline BSML::IncrementSetting*
-AddConfigValueIncrementInt(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
-    auto object =
-        BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max, [&configValue](float value) {
+AddConfigValueIncrementInt(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
+    auto object = BSML::Lite::CreateIncrementSetting(
+        parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max, [&configValue](float value) {
             configValue.SetValue((int) value);
-        });
+        }
+    );
     SetButtons(object);
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
@@ -259,17 +255,12 @@ AddConfigValueIncrementInt(const BSML::Lite::TransformWrapper& parent, ConfigUti
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementFloat(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName(),
-        decimals,
-        increment,
-        configValue.GetValue(),
-        min,
-        max,
-        [&configValue](float value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max, [&configValue](float value) {
+            configValue.SetValue(value);
+        }
     );
     SetButtons(object);
     if (!configValue.GetHoverHint().empty())
@@ -278,17 +269,12 @@ inline BSML::IncrementSetting* AddConfigValueIncrementFloat(
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementDouble(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName(),
-        decimals,
-        increment,
-        configValue.GetValue(),
-        min,
-        max,
-        [&configValue](float value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max, [&configValue](float value) {
+            configValue.SetValue(value);
+        }
     );
     SetButtons(object);
     if (!configValue.GetHoverHint().empty())
@@ -297,7 +283,7 @@ inline BSML::IncrementSetting* AddConfigValueIncrementDouble(
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementEnum(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> const enumStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> const enumStrings
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);
     object->onChange = [&configValue, object, enumStrings](float value) {
@@ -314,7 +300,7 @@ inline BSML::IncrementSetting* AddConfigValueIncrementEnum(
 template <class V>
 requires(std::is_convertible_v<V, float>)
 inline BSML::SliderSetting* AddConfigValueSlider(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max
 ) {
     auto object = BSML::Lite::CreateSliderSetting(
         parent, configValue.GetName(), increment, configValue.GetValue(), min, max, [&configValue](float value) { configValue.SetValue(value); }
@@ -328,19 +314,12 @@ inline BSML::SliderSetting* AddConfigValueSlider(
 template <class V>
 requires(std::is_convertible_v<V, float>)
 inline BSML::SliderSetting* AddConfigValueSliderIncrement(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, float increment, float min, float max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<V>& configValue, float increment, float min, float max
 ) {
     auto object = BSML::Lite::CreateSliderSetting(
-        parent,
-        configValue.GetName(),
-        increment,
-        configValue.GetValue(),
-        min,
-        max,
-        1,
-        true,
-        {},
-        [&configValue](float value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), increment, configValue.GetValue(), min, max, 1, true, {}, [&configValue](float value) {
+            configValue.SetValue(value);
+        }
     );
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
@@ -348,7 +327,7 @@ inline BSML::SliderSetting* AddConfigValueSliderIncrement(
 }
 
 inline ::HMUI::InputFieldView*
-AddConfigValueInputString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue) {
+AddConfigValueInputString(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<std::string>& configValue) {
     auto object = BSML::Lite::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), [&configValue](StringW value) {
         configValue.SetValue(static_cast<std::string>(value));
     });
@@ -358,7 +337,7 @@ AddConfigValueInputString(const BSML::Lite::TransformWrapper& parent, ConfigUtil
 }
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownString(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string_view> const dropdownStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string_view> const dropdownStrings
 ) {
     int currentIndex = 0;
     std::string_view currentValue = "";
@@ -380,7 +359,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownString(
 }
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, std::span<std::string_view> const dropdownStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<int>& configValue, std::span<std::string_view> const dropdownStrings
 ) {
     int value = configValue.GetValue();
     std::string_view stringValue = value < dropdownStrings.size() ? dropdownStrings[value] : "";
@@ -405,14 +384,11 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(
 }
 
 inline BSML::ColorSetting*
-AddConfigValueColorPicker(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
+AddConfigValueColorPicker(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
     auto object = BSML::Lite::CreateColorPicker(
-        parent,
-        configValue.GetName(),
-        configValue.GetValue(),
-        nullptr,
-        nullptr,
-        [&configValue](::UnityEngine::Color value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr, [&configValue](::UnityEngine::Color value) {
+            configValue.SetValue(value);
+        }
     );
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
@@ -422,14 +398,9 @@ AddConfigValueColorPicker(const BSML::Lite::TransformWrapper& parent, ConfigUtil
 template <class T>
 requires std::is_same_v<T, ::UnityEngine::Vector2> || std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
 inline std::array<BSML::IncrementSetting*, 2>
-AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+AddConfigValueIncrementVector2(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
     auto object1 = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " X",
-        decimals,
-        increment,
-        configValue.GetValue().x,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.x = value;
             configValue.SetValue(newValue);
@@ -439,12 +410,7 @@ AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, Confi
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object1, configValue.GetHoverHint());
     auto object2 = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " Y",
-        decimals,
-        increment,
-        configValue.GetValue().y,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " Y", decimals, increment, configValue.GetValue().y, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.y = value;
             configValue.SetValue(newValue);
@@ -459,15 +425,10 @@ AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, Confi
 template <class T>
 requires std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
 inline std::array<BSML::IncrementSetting*, 3>
-AddConfigValueIncrementVector3(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+AddConfigValueIncrementVector3(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector2(parent, configValue, decimals, increment);
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " Z",
-        decimals,
-        increment,
-        configValue.GetValue().z,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " Z", decimals, increment, configValue.GetValue().z, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.z = value;
             configValue.SetValue(newValue);
@@ -480,16 +441,11 @@ AddConfigValueIncrementVector3(const BSML::Lite::TransformWrapper& parent, Confi
 }
 
 inline std::array<::BSML::IncrementSetting*, 4> AddConfigValueIncrementVector4(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment
 ) {
     auto objects = AddConfigValueIncrementVector3(parent, configValue, decimals, increment);
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " W",
-        decimals,
-        increment,
-        configValue.GetValue().w,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " W", decimals, increment, configValue.GetValue().w, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.w = value;
             configValue.SetValue(newValue);
