@@ -1,7 +1,5 @@
 #pragma once
 
-#include "config-utils.hpp"
-
 #include <string>
 
 namespace modloader {
@@ -14,8 +12,6 @@ namespace modloader {
     };
 }
 
-namespace Configuration {
-    static inline std::string getConfigFilePath(modloader::ModInfo const& info) {
-        return info.id + ".json";
-    }
+inline std::string get_config_path(modloader::ModInfo const& info) {
+    return info.id + ".json";
 }

@@ -1,12 +1,22 @@
-#include "ModConfig.hpp"
+#pragma once
 
-#include <sstream>
+#include "config-utils.hpp"
 
-static modloader::ModInfo modInfo = {"test", "0.0.1", 0};
+DECLARE_JSON_STRUCT(Subclass) {
+    VALUE(double, SubDouble);
+    VALUE_DEFAULT(bool, SubBool, true);
+};
 
-int main(int argc, char** args) {
-    getModConfig().Init(modInfo);
+DECLARE_CONFIG(ModConfig) {
+    CONFIG_VALUE(SampleBool, bool, "SampleBool", true);
+    CONFIG_VALUE(SampleInt, int, "SampleInt", 1337);
+    CONFIG_VALUE(SampleFloat, float, "SampleFloat", 10.0f);
+    CONFIG_VALUE(SampleString, std::string, "SampleString", "hi");
+    CONFIG_VALUE(SampleSubclass, Subclass, "SampleSubclass", {});
+    CONFIG_VALUE(SampleVector, std::vector<int>, "SampleVector", std::vector<int>({1, 2, 3}));
+};
 
+inline void RunTest() {
     getModConfig().SampleBool.AddChangeEvent([](bool newValue) { ConfigUtils::Logger.info("SampleBool ValueChange: {}", newValue); });
     ConfigUtils::Logger.info("SampleBool: {}", getModConfig().SampleBool.GetValue());
     ConfigUtils::Logger.info("SampleInt: {}", getModConfig().SampleInt.GetValue());

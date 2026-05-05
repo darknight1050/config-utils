@@ -5,6 +5,7 @@
 
 namespace Paper {
     enum class LogLevel : uint8_t { DBG = 3, INF = 4, WRN = 5, ERR = 6, CRIT = 7, OFF = 0 };
+
     constexpr auto format_as(LogLevel level) {
         switch (level) {
             case LogLevel::DBG:
