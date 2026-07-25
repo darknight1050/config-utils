@@ -4,20 +4,22 @@
             "defines": [
                 "__GNUC__",
                 "__aarch64__",
-                "VERSION=\"0.0.1\""
+                "VERSION=\"0.0.1\"",
+                "REFLECT_CPP_C_ARRAYS_OR_INHERITANCE"
             ],
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**",
-                "${workspaceFolder}/shared/**",
-                "${workspaceFolder}/extern/**",
-                "C:/Development/Tools/android-ndk-r22b/**"
+                "${env:VCPKG_ROOT}/installed/x64-windows/include",
+                "${env:VCPKG_ROOT}/installed/x64-windows/include/fmt",
+                "${workspaceFolder}/local/reflectcpp/include",
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/shared",
+                "${workspaceFolder}/local"
             ],
             "name": "Quest",
-            "cStandard": "c11",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "clang-x64",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerPath": "C:/msys64/ucrt64/bin/g++.exe"
         }
     ],
     "version": 4

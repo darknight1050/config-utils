@@ -36,7 +36,7 @@ IncludeCategories:
   - Regex: '^"[A-Z].*\/.+\.hpp"$'
     Priority: 5
     CaseSensitive: true
-  - Regex: "^.+/shared/.+"
+  - Regex: "^.+/(shared|include)/.+"
     Priority: 1
     SortPriority: 2
     CaseSensitive: true

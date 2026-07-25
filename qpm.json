@@ -6,13 +6,44 @@
   "info": {
     "name": "config-utils",
     "id": "config-utils",
-    "version": "2.2.0",
+    "version": "3.0.0",
     "url": "https://github.com/darknight1050/config-utils",
     "additionalData": {
       "headersOnly": true,
       "overrideSoName": "libconfig-utils_test.so",
-      "cmake": true
+      "cmake": true,
+      "compileOptions": {
+        "cppFlags": [
+          "-DREFLECT_CPP_C_ARRAYS_OR_INHERITANCE"
+        ]
+      }
     }
+  },
+  "workspace": {
+    "scripts": {
+      "build": [
+        "python ./extern/includes/mod-scripts/shared/build.py -DREFLECT_CPP_C_ARRAYS_OR_INHERITANCE $0:?"
+      ],
+      "copy": [
+        "python ./extern/includes/mod-scripts/shared/cpy.py $0:?"
+      ],
+      "dbg": [
+        "python ./extern/includes/mod-scripts/shared/dbg.py $0:?"
+      ],
+      "log": [
+        "python ./extern/includes/mod-scripts/shared/log.py $0:?"
+      ],
+      "restart": [
+        "python ./extern/includes/mod-scripts/shared/restart.py $0:?"
+      ],
+      "local": [
+        "pwsh local.ps1"
+      ],
+      "test": [
+        "./cfgutilstest.exe"
+      ]
+    },
+    "ndk": "^29.0.14206865"
   },
   "dependencies": [
     {
@@ -26,9 +57,16 @@
       "additionalData": {}
     },
     {
-      "id": "rapidjson-macros",
-      "versionRange": "^3.0.1",
+      "id": "reflectcpp",
+      "versionRange": "^0.25.0",
       "additionalData": {}
+    },
+    {
+      "id": "mod-scripts",
+      "versionRange": "^1.0.1",
+      "additionalData": {
+        "private": true
+      }
     }
   ]
 }

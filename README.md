@@ -1,10 +1,16 @@
 # ConfigUtils
-\
+
 ## Local Test
 
-Make sure gcc is on path and VCPKG_ROOT is set. Run `vcpkg install rapidjson fmt` and optionally update the path in `local.ps1` if needed. Then run `local.ps1` and `test.ps1`.
+- Make sure gcc is on path and VCPKG_ROOT is set.
+- Run `git checkout tags/v0.25.0` in `local/reflectcpp`.
+- Run `vcpkg install fmt`.
+- Update the path in `local.ps1` if needed.
+- Run `local.ps1` or `qpm s local` to build.
+- Run `cfgutilstest.exe` or `qpm s test` to run the test executable.
 
 ## Credits
 
-* [Sc2ad](https://github.com/Sc2ad) and [jakibaki](https://github.com/jakibaki) - [beatsaber-hook](https://github.com/sc2ad/beatsaber-hook)
-* [raftario](https://github.com/raftario) - [vscode-bsqm](https://github.com/raftario/vscode-bsqm) and [this template](https://github.com/raftario/bmbf-mod-template)
+- [darknight1050](https://github.com/darknight1050/) for the original creation
+- [kodenamekrak](https://github.com/kodenamekrak) for making [reflectcpp](https://github.com/getml/reflect-cpp) available on qpm
+- [Metalit](https://github.com/Metalit) for maintenance and [rapidjson-macros](https://github.com/Metalit/RapidjsonMacros) while it was used

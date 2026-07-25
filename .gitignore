@@ -16,11 +16,15 @@ mod.json
 build/
 *.zip
 *.qmod
+*.exe
 
 # Script outputs and artifacts
 *.txt
 *.log
 *.html
+*.json
 
 # Exceptions
 !CMakeLists.txt
+!qpm.json
+!qpm.shared.json

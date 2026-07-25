@@ -5,11 +5,18 @@ if ($null -eq $env:VCPKG_ROOT -or (Test-Path $env:VCPKG_ROOT) -eq $false) {
 }
 
 $fmt = Join-Path $env:VCPKG_ROOT "installed/$triplet/include/fmt"
-# so that <fmt/x.h> works
-$fmt_upper = Join-Path $env:VCPKG_ROOT "installed/$triplet/include"
 
 if ((Test-Path $fmt) -eq $false) {
     Write-Error "vcpkg fmt not found"
 }
 
-g++ -std=c++23 -DFMT_HEADER_ONLY -I"$fmt" -I"$fmt_upper" -Iinclude -Ishared -Ilocal ./local/test.cpp -o cfgutilstest.exe
+# so that <fmt/x.h> works
+$upper = Join-Path $env:VCPKG_ROOT "installed/$triplet/include"
+
+$rfl = "./local/reflectcpp"
+
+g++ -std=c++23 -o cfgutilstest.exe -fconcepts-diagnostics-depth=2 `
+    -DFMT_HEADER_ONLY -DREFLECT_CPP_C_ARRAYS_OR_INHERITANCE `
+    -I"$fmt" -I"$upper" -I"$rfl/include" -Iinclude -Ishared -Ilocal `
+    "$rfl/src/reflectcpp.cpp" "$rfl/src/reflectcpp_json.cpp" "$rfl/src/yyjson.c" `
+    ./local/test.cpp
