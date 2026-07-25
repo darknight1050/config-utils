@@ -1,3 +1,0 @@
-[submodule "local/rapidjson-macros"]
-	path = local/rapidjson-macros
-	url = https://github.com/Metalit/RapidjsonMacros.git
