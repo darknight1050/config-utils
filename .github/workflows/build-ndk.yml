@@ -46,7 +46,7 @@ jobs:
     - name: Build
       run: |
         cd ${GITHUB_WORKSPACE}
-        pwsh -Command ./build.ps1
+        qpm s build
 
     - name: Get Library Name
       id: libname
