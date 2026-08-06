@@ -235,8 +235,13 @@ AddConfigValueModifierButton(const BSML::Lite::TransformWrapper& parent, ConfigU
 
 inline void SetButtons(BSML::IncrementSetting* increment) {
     auto child = increment->get_gameObject()->get_transform()->GetChild(1);
-    auto decButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->First();
-    auto incButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->Last();
+    auto buttons = child->GetComponentsInChildren<UnityEngine::UI::Button*>();
+    if (buttons.size() < 2) {
+        ConfigUtils::Logger.error("IncrementSetting does not have enough buttons!");
+        return;
+    }
+    auto decButton = buttons.front();
+    auto incButton = buttons.back();
     increment->onChange = [oldFunc = std::move(increment->onChange), increment, decButton, incButton](float value) {
         oldFunc(value);
         decButton->set_interactable(value > increment->minValue);
