@@ -14,10 +14,17 @@
       "cmake": true
     }
   },
+  "workspace": {
+    "scripts": {},
+    "ndk": "^29.0.14206865",
+    "qmodIncludeDirs": [],
+    "qmodIncludeFiles": [],
+    "qmodOutput": null
+  },
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^7.4.0",
+      "versionRange": "^8.1.0",
       "additionalData": {}
     },
     {

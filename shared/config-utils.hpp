@@ -5,7 +5,7 @@
 #include "macros.hpp"
 #include "paper.hpp"
 #else
-#include "beatsaber-hook/shared/config/config-utils.hpp"
+#include "beatsaber-hook/shared/utils.hpp"
 #include "paper2_scotland2/shared/logger.hpp"
 #include "rapidjson-macros/shared/macros.hpp"
 #endif
@@ -41,7 +41,7 @@ namespace ConfigUtils {
 
        public:
         static void Init(modloader::ModInfo const info) {
-            __config_path = Configuration::getConfigFilePath(info);
+            __config_path = get_config_path(info);
             try {
                 ReadFromFile(__config_path, GetInstance());
             } catch (std::exception const& err) {
