@@ -101,8 +101,8 @@ namespace ConfigUtils {
                 event(value);
         }
 
-        std::string GetName() { return Json; }
-        std::string GetHoverHint() { return Hint; }
+        std::string GetName() { return Json.str(); }
+        std::string GetHoverHint() { return Hint.str(); }
         T GetDefaultValue() {
             static T def = []() {
                 C config;
@@ -116,6 +116,17 @@ namespace ConfigUtils {
             changeEvents.push_back(event);
         }
     };
+
+    template <typename T>
+    struct IsValueImpl : std::false_type {};
+    template <typename T, typename C, auto Save, rfl::internal::StringLiteral Field, rfl::internal::StringLiteral Json, rfl::internal::StringLiteral Hint>
+    struct IsValueImpl<Value<T, C, Save, Field, Json, Hint>> : std::true_type {};
+
+    template <typename C>
+    concept IsValue = IsValueImpl<std::remove_cvref_t<C>>::value;
+
+    template <typename C, typename T>
+    concept ValueOf = IsValue<C> && std::is_same_v<typename std::remove_cvref_t<C>::ReflectionType, T>;
 
     struct RenameProcessor {
         template <typename StructType>
@@ -136,6 +147,62 @@ namespace ConfigUtils {
     };
 }
 
+#pragma region UNITY_STRUCTS
+#if __has_include("UnityEngine/Vector2.hpp")
+#include "UnityEngine/Color.hpp"
+#include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/Vector3.hpp"
+#include "UnityEngine/Vector4.hpp"
+
+namespace rfl {
+    template <>
+    struct Reflector<UnityEngine::Color> {
+        struct ReflType {
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+        static UnityEngine::Color to(ReflType const& value) noexcept { return {value.r, value.g, value.b, value.a}; }
+        static ReflType from(UnityEngine::Color const& value) noexcept { return {value.r, value.g, value.b, value.a}; }
+    };
+
+    template <>
+    struct Reflector<UnityEngine::Vector2> {
+        struct ReflType {
+            float x;
+            float y;
+        };
+        static UnityEngine::Vector2 to(ReflType const& value) noexcept { return {value.x, value.y}; }
+        static ReflType from(UnityEngine::Vector2 const& value) noexcept { return {value.x, value.y}; }
+    };
+
+    template <>
+    struct Reflector<UnityEngine::Vector3> {
+        struct ReflType {
+            float x;
+            float y;
+            float z;
+        };
+        static UnityEngine::Vector3 to(ReflType const& value) noexcept { return {value.x, value.y, value.z}; }
+        static ReflType from(UnityEngine::Vector3 const& value) noexcept { return {value.x, value.y, value.z}; }
+    };
+
+    template <>
+    struct Reflector<UnityEngine::Vector4> {
+        struct ReflType {
+            float x;
+            float y;
+            float z;
+            float w;
+        };
+        static UnityEngine::Vector4 to(ReflType const& value) noexcept { return {value.x, value.y, value.z, value.w}; }
+        static ReflType from(UnityEngine::Vector4 const& value) noexcept { return {value.x, value.y, value.z, value.w}; }
+    };
+}
+#endif
+#pragma endregion
+
 #pragma region BSML_LITE
 #if __has_include("bsml/shared/BSML-Lite.hpp")
 #include "bsml/shared/BSML-Lite.hpp"
@@ -146,7 +213,7 @@ namespace ConfigUtils {
 #include "UnityEngine/Vector3.hpp"
 #include "UnityEngine/Vector4.hpp"
 
-inline BSML::ToggleSetting* AddConfigValueToggle(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<bool>& configValue) {
+inline BSML::ToggleSetting* AddConfigValueToggle(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<bool> auto& configValue) {
     auto object =
         BSML::Lite::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), [&configValue](bool value) { configValue.SetValue(value); });
     if (!configValue.GetHoverHint().empty())
@@ -154,7 +221,8 @@ inline BSML::ToggleSetting* AddConfigValueToggle(BSML::Lite::TransformWrapper co
     return object;
 }
 
-inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<bool>& configValue) {
+inline ::UnityEngine::UI::Toggle*
+AddConfigValueModifierButton(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<bool> auto& configValue) {
     auto object = BSML::Lite::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), [&configValue](bool value) {
         configValue.SetValue(value);
     });
@@ -165,8 +233,9 @@ inline ::UnityEngine::UI::Toggle* AddConfigValueModifierButton(BSML::Lite::Trans
 
 inline void SetButtons(BSML::IncrementSetting* increment) {
     auto child = increment->get_gameObject()->get_transform()->GetChild(1);
-    auto decButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->First();
-    auto incButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->Last();
+    auto buttons = child->GetComponentsInChildren<UnityEngine::UI::Button*>();
+    auto decButton = buttons.front();
+    auto incButton = buttons.back();
     increment->onChange = [oldFunc = std::move(increment->onChange), increment, decButton, incButton](float value) {
         oldFunc(value);
         decButton->set_interactable(value > increment->minValue);
@@ -177,7 +246,7 @@ inline void SetButtons(BSML::IncrementSetting* increment) {
 }
 
 inline BSML::IncrementSetting*
-AddConfigValueIncrementInt(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<int>& configValue, int increment, int min, int max) {
+AddConfigValueIncrementInt(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<int> auto& configValue, int increment, int min, int max) {
     auto object = BSML::Lite::CreateIncrementSetting(
         parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max, [&configValue](float value) {
             configValue.SetValue((int) value);
@@ -190,7 +259,7 @@ AddConfigValueIncrementInt(BSML::Lite::TransformWrapper const& parent, ConfigUti
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementFloat(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<float>& configValue, int decimals, float increment, float min, float max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<float> auto& configValue, int decimals, float increment, float min, float max
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(
         parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max, [&configValue](float value) {
@@ -204,7 +273,7 @@ inline BSML::IncrementSetting* AddConfigValueIncrementFloat(
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementDouble(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<double>& configValue, int decimals, double increment, double min, double max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<double> auto& configValue, int decimals, double increment, double min, double max
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(
         parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max, [&configValue](float value) {
@@ -218,7 +287,7 @@ inline BSML::IncrementSetting* AddConfigValueIncrementDouble(
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementEnum(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<int>& configValue, std::vector<std::string> const enumStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<int> auto& configValue, std::vector<std::string> const enumStrings
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);
     object->onChange = [&configValue, object, enumStrings](float value) {
@@ -232,11 +301,10 @@ inline BSML::IncrementSetting* AddConfigValueIncrementEnum(
     return object;
 }
 
-template <class V>
-requires(std::is_convertible_v<V, float>)
-inline BSML::SliderSetting* AddConfigValueSlider(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<V>& configValue, int decimals, float increment, float min, float max
-) {
+template <ConfigUtils::IsValue C>
+requires(std::is_convertible_v<typename C::ReflectionType, float>)
+inline BSML::SliderSetting*
+AddConfigValueSlider(BSML::Lite::TransformWrapper const& parent, C& configValue, int decimals, float increment, float min, float max) {
     auto object = BSML::Lite::CreateSliderSetting(
         parent, configValue.GetName(), increment, configValue.GetValue(), min, max, [&configValue](float value) { configValue.SetValue(value); }
     );
@@ -246,10 +314,10 @@ inline BSML::SliderSetting* AddConfigValueSlider(
     return object;
 }
 
-template <class V>
-requires(std::is_convertible_v<V, float>)
+template <ConfigUtils::IsValue C>
+requires(std::is_convertible_v<typename C::ReflectionType, float>)
 inline BSML::SliderSetting*
-AddConfigValueSliderIncrement(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<V>& configValue, float increment, float min, float max) {
+AddConfigValueSliderIncrement(BSML::Lite::TransformWrapper const& parent, C& configValue, float increment, float min, float max) {
     auto object = BSML::Lite::CreateSliderSetting(
         parent, configValue.GetName(), increment, configValue.GetValue(), min, max, 1, true, {}, [&configValue](float value) {
             configValue.SetValue(value);
@@ -260,7 +328,8 @@ AddConfigValueSliderIncrement(BSML::Lite::TransformWrapper const& parent, Config
     return object;
 }
 
-inline ::HMUI::InputFieldView* AddConfigValueInputString(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<std::string>& configValue) {
+inline ::HMUI::InputFieldView*
+AddConfigValueInputString(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<std::string> auto& configValue) {
     auto object = BSML::Lite::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), [&configValue](StringW value) {
         configValue.SetValue(static_cast<std::string>(value));
     });
@@ -270,7 +339,7 @@ inline ::HMUI::InputFieldView* AddConfigValueInputString(BSML::Lite::TransformWr
 }
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownString(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<std::string>& configValue, std::span<std::string_view> const dropdownStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<std::string> auto& configValue, std::span<std::string_view> const dropdownStrings
 ) {
     int currentIndex = 0;
     std::string_view currentValue = "";
@@ -292,7 +361,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownString(
 }
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<int>& configValue, std::span<std::string_view> const dropdownStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<int> auto& configValue, std::span<std::string_view> const dropdownStrings
 ) {
     int value = configValue.GetValue();
     std::string_view stringValue = value < dropdownStrings.size() ? dropdownStrings[value] : "";
@@ -317,7 +386,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(
 }
 
 inline BSML::ColorSetting*
-AddConfigValueColorPicker(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<::UnityEngine::Color>& configValue) {
+AddConfigValueColorPicker(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<::UnityEngine::Color> auto& configValue) {
     auto object = BSML::Lite::CreateColorPicker(
         parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr, [&configValue](::UnityEngine::Color value) {
             configValue.SetValue(value);
@@ -328,10 +397,13 @@ AddConfigValueColorPicker(BSML::Lite::TransformWrapper const& parent, ConfigUtil
     return object;
 }
 
-template <class T>
-requires std::is_same_v<T, ::UnityEngine::Vector2> || std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
+template <ConfigUtils::IsValue C>
+requires(
+    std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector2> || std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector3> ||
+    std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector4>
+)
 inline std::array<BSML::IncrementSetting*, 2>
-AddConfigValueIncrementVector2(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<T>& configValue, int decimals, double increment) {
+AddConfigValueIncrementVector2(BSML::Lite::TransformWrapper const& parent, C& configValue, int decimals, double increment) {
     auto object1 = BSML::Lite::CreateIncrementSetting(
         parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x, [&configValue](float value) {
             auto newValue = configValue.GetValue();
@@ -355,10 +427,10 @@ AddConfigValueIncrementVector2(BSML::Lite::TransformWrapper const& parent, Confi
     return {object1, object2};
 }
 
-template <class T>
-requires std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
+template <ConfigUtils::IsValue C>
+requires(std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector3> || std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector4>)
 inline std::array<BSML::IncrementSetting*, 3>
-AddConfigValueIncrementVector3(BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<T>& configValue, int decimals, double increment) {
+AddConfigValueIncrementVector3(BSML::Lite::TransformWrapper const& parent, C& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector2(parent, configValue, decimals, increment);
     auto object = BSML::Lite::CreateIncrementSetting(
         parent, configValue.GetName() + " Z", decimals, increment, configValue.GetValue().z, [&configValue](float value) {
@@ -374,7 +446,7 @@ AddConfigValueIncrementVector3(BSML::Lite::TransformWrapper const& parent, Confi
 }
 
 inline std::array<::BSML::IncrementSetting*, 4> AddConfigValueIncrementVector4(
-    BSML::Lite::TransformWrapper const& parent, ConfigUtils::Value<::UnityEngine::Vector4>& configValue, int decimals, double increment
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<::UnityEngine::Vector4> auto& configValue, int decimals, double increment
 ) {
     auto objects = AddConfigValueIncrementVector3(parent, configValue, decimals, increment);
     auto object = BSML::Lite::CreateIncrementSetting(

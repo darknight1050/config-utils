@@ -17,12 +17,14 @@ DECLARE_CONFIG(ModConfig) {
 };
 
 inline void RunTest() {
+    ConfigUtils::Logger.info("SampleInt name: {}", getModConfig().SampleInt.GetName());
+    ConfigUtils::Logger.info("SampleFloat name: {}", getModConfig().SampleFloat.GetName());
     ConfigUtils::Logger.info("SampleInt default: {}", getModConfig().SampleInt.GetDefaultValue());
     getModConfig().SampleBool.AddChangeEvent([](bool newValue) { ConfigUtils::Logger.info("SampleBool ValueChange: {}", newValue); });
     ConfigUtils::Logger.info("SampleBool: {}", getModConfig().SampleBool.GetValue());
     ConfigUtils::Logger.info("SampleInt: {}", getModConfig().SampleInt.GetValue());
-    ConfigUtils::Logger.info("RenamedFloat: {}", getModConfig().SampleFloat.GetValue());
-    ConfigUtils::Logger.info("SampleString: {}", getModConfig().SampleString.GetValue().c_str());
+    ConfigUtils::Logger.info("SampleFloat: {}", getModConfig().SampleFloat.GetValue());
+    ConfigUtils::Logger.info("SampleString: {}", getModConfig().SampleString.GetValue());
     Subclass subclass = getModConfig().SampleSubclass.GetValue();
     ConfigUtils::Logger.info("SampleSubclass: SubDouble: {}, SubBool: {}", subclass.SubDouble, subclass.SubBool);
     std::stringstream ss;
