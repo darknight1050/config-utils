@@ -210,6 +210,22 @@ namespace rfl {
         static ReflType from(UnityEngine::Vector4 const& value) noexcept { return {value.x, value.y, value.z, value.w}; }
     };
 }
+
+inline bool operator==(UnityEngine::Color const& lhs, UnityEngine::Color const& rhs) {
+    return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
+}
+
+inline bool operator==(UnityEngine::Vector2 const& lhs, UnityEngine::Vector2 const& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+inline bool operator==(UnityEngine::Vector3 const& lhs, UnityEngine::Vector3 const& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+inline bool operator==(UnityEngine::Vector4 const& lhs, UnityEngine::Vector4 const& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
+}
 #endif
 #pragma endregion
 
