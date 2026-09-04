@@ -2,10 +2,14 @@
 
 #if __has_include("beatsaber-hook/shared/utils.hpp")
 #include "beatsaber-hook/shared/utils.hpp"
-#define CONFIG_UTILS_GET_PATH get_config_path
+#define CONFIG_UTILS_GET_PATH(i) get_config_path(i)
+#define CONFIG_UTILS_FIRST(v) v.front()
+#define CONFIG_UTILS_LAST(v) v.back()
 #else
 #include "beatsaber-hook/shared/config/config-utils.hpp"
-#define CONFIG_UTILS_GET_PATH Configuration::getConfigFilePath
+#define CONFIG_UTILS_GET_PATH(i) Configuration::getConfigFilePath(i)
+#define CONFIG_UTILS_FIRST(v) v->First()
+#define CONFIG_UTILS_LAST(v) v->Last()
 #endif
 #include "paper2_scotland2/shared/logger.hpp"
 #include "reflectcpp/include/rfl.hpp"
@@ -260,8 +264,8 @@ AddConfigValueModifierButton(BSML::Lite::TransformWrapper const& parent, ConfigU
 inline void SetButtons(BSML::IncrementSetting* increment) {
     auto child = increment->get_gameObject()->get_transform()->GetChild(1);
     auto buttons = child->GetComponentsInChildren<UnityEngine::UI::Button*>();
-    auto decButton = buttons.front();
-    auto incButton = buttons.back();
+    auto decButton = CONFIG_UTILS_FIRST(buttons);
+    auto incButton = CONFIG_UTILS_LAST(buttons);
     increment->onChange = [oldFunc = std::move(increment->onChange), increment, decButton, incButton](float value) {
         oldFunc(value);
         decButton->set_interactable(value > increment->minValue);
