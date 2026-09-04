@@ -20,6 +20,7 @@ inline void RunTest() {
     ConfigUtils::Logger.info("SampleInt name: {}", getModConfig().SampleInt.GetName());
     ConfigUtils::Logger.info("SampleFloat name: {}", getModConfig().SampleFloat.GetName());
     ConfigUtils::Logger.info("SampleInt default: {}", getModConfig().SampleInt.GetDefaultValue());
+    ConfigUtils::Logger.info("SampleInt static default: {}", decltype(getModConfig().SampleInt)::GetDefaultValue());
     getModConfig().SampleBool.AddChangeEvent([](bool newValue) { ConfigUtils::Logger.info("SampleBool ValueChange: {}", newValue); });
     ConfigUtils::Logger.info("SampleBool: {}", getModConfig().SampleBool.GetValue());
     ConfigUtils::Logger.info("SampleInt: {}", getModConfig().SampleInt.GetValue());

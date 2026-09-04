@@ -97,7 +97,8 @@ namespace ConfigUtils {
 
         bool operator==(T const& value) const { return this->value == value; }
 
-        T const& GetValue() { return value; }
+        T& GetValue() { return value; }
+        T const& GetValue() const { return value; }
         void SetValue(T const& value, bool save = true) {
             this->value = value;
             if (save)
@@ -107,9 +108,9 @@ namespace ConfigUtils {
                 event(value);
         }
 
-        std::string GetName() { return Json.str(); }
-        std::string GetHoverHint() { return Hint.str(); }
-        T GetDefaultValue() {
+        std::string GetName() const { return Json.str(); }
+        std::string GetHoverHint() const { return Hint.str(); }
+        static T GetDefaultValue() {
             static T def = []() {
                 C config;
                 return rfl::to_view(config).template get<Field>()->GetValue();
