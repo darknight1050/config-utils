@@ -1,6 +1,12 @@
 #pragma once
 
+#if __has_include("beatsaber-hook/shared/utils.hpp")
 #include "beatsaber-hook/shared/utils.hpp"
+#define CONFIG_UTILS_GET_PATH get_config_path
+#else
+#include "beatsaber-hook/shared/config/config-utils.hpp"
+#define CONFIG_UTILS_GET_PATH Configuration::getConfigFilePath
+#endif
 #include "paper2_scotland2/shared/logger.hpp"
 #include "reflectcpp/include/rfl.hpp"
 #include "reflectcpp/include/rfl/json.hpp"
@@ -30,7 +36,7 @@ namespace ConfigUtils {
 
        public:
         static void Init(modloader::ModInfo const& info) {
-            __config_path = get_config_path(info);
+            __config_path = CONFIG_UTILS_GET_PATH(info);
             if (!fileexists(__config_path)) {
                 ConfigUtils::Logger.info("Config for {} {} does not exist at {}", info.id, info.version, __config_path);
                 Save();
