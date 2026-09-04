@@ -161,6 +161,47 @@ namespace ConfigUtils {
     };
 }
 
+// Equality for rfl types - Generic and Object can be removed in the next reflectcpp update
+namespace rfl {
+    template <class T>
+    bool operator==(Object<T> const& lhs, Object<T> const& rhs) {
+        auto li = lhs.begin();
+        auto ri = rhs.begin();
+        while (li != lhs.end() && ri != rhs.end()) {
+            if (*li != *ri)
+                return false;
+            li++;
+            ri++;
+        }
+        return true;
+    }
+
+    inline bool operator==(Generic const& lhs, Generic const& rhs) {
+        if (lhs.get().index() != rhs.get().index())
+            return false;
+        return std::visit(
+            [&](auto const& val) -> bool {
+                using T = std::remove_cvref_t<decltype(val)>;
+                if constexpr (std::is_same_v<T, std::nullopt_t>)
+                    return true;
+                else
+                    return val == std::get<T>(rhs.get());
+            },
+            lhs.get()
+        );
+    }
+
+    template <class... Vs>
+    bool operator==(Variant<Vs...> const& lhs, Variant<Vs...> const& rhs) {
+        if (lhs.index() != rhs.index())
+            return false;
+        return lhs.visit([&](auto const& val) -> bool {
+            using T = std::remove_cvref_t<decltype(val)>;
+            return val == rfl::get<T>(rhs);
+        });
+    }
+}
+
 #pragma region UNITY_STRUCTS
 #if __has_include("UnityEngine/Vector2.hpp")
 #include "UnityEngine/Color.hpp"
