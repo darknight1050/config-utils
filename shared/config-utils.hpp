@@ -125,6 +125,9 @@ namespace ConfigUtils {
     };
 
     template <typename T>
+    using Map = std::unordered_map<std::string, T>;
+
+    template <typename T>
     struct IsValueImpl : std::false_type {};
     template <typename T, typename C, auto Save, rfl::internal::StringLiteral Field, rfl::internal::StringLiteral Json, rfl::internal::StringLiteral Hint>
     struct IsValueImpl<Value<T, C, Save, Field, Json, Hint>> : std::true_type {};

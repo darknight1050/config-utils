@@ -14,6 +14,7 @@ DECLARE_CONFIG(ModConfig) {
     CONFIG_VALUE(SampleString, std::string, "SampleString", "hi");
     CONFIG_VALUE(SampleSubclass, Subclass, "SampleSubclass", {});
     CONFIG_VALUE(SampleVector, std::vector<int>, "SampleVector", std::vector<int>({1, 2, 3}));
+    CONFIG_VALUE(SampleMap, ConfigUtils::Map<int>, "SampleMap", {});
 };
 
 inline void RunTest() {
@@ -32,6 +33,7 @@ inline void RunTest() {
     for (auto i : getModConfig().SampleVector.GetValue())
         ss << i << " ";
     ConfigUtils::Logger.info("SampleVector: {}", ss.str().c_str());
+    ConfigUtils::Logger.info("SampleMap size: {}", getModConfig().SampleMap.GetValue().size());
     getModConfig().SampleBool.SetValue(false);
     getModConfig().SampleInt.SetValue(1);
     getModConfig().SampleFloat.SetValue(1337.0f);
@@ -40,4 +42,6 @@ inline void RunTest() {
     newSubclass.SubDouble = 1.414;
     getModConfig().SampleSubclass.SetValue(newSubclass);
     getModConfig().SampleVector.SetValue({1, 2, 3, 4});
+    getModConfig().SampleMap.GetValue()["NewValue"] = 999;
+    getModConfig().Save();
 }
