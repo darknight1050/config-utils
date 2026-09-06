@@ -61,7 +61,7 @@ jobs:
     - name: Build
       run: |
         cd ${GITHUB_WORKSPACE}
-        pwsh -Command ./build.ps1
+        qpm s build
 
     # Get release that was created for this tag
     - name: Get Release

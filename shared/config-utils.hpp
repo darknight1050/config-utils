@@ -1,51 +1,58 @@
 #pragma once
 
-#ifdef CONFIG_UTILS_GCC_TEST
-#include "bs.hpp"
-#include "macros.hpp"
-#include "paper.hpp"
+#if __has_include("beatsaber-hook/shared/utils.hpp")
+#include "beatsaber-hook/shared/utils.hpp"
+#define CONFIG_UTILS_GET_PATH(i) get_config_path(i)
+#define CONFIG_UTILS_FIRST(v) v.front()
+#define CONFIG_UTILS_LAST(v) v.back()
 #else
 #include "beatsaber-hook/shared/config/config-utils.hpp"
-#include "paper2_scotland2/shared/logger.hpp"
-#include "rapidjson-macros/shared/macros.hpp"
+#define CONFIG_UTILS_GET_PATH(i) Configuration::getConfigFilePath(i)
+#define CONFIG_UTILS_FIRST(v) v->First()
+#define CONFIG_UTILS_LAST(v) v->Last()
 #endif
+#include "paper2_scotland2/shared/logger.hpp"
+#include "reflectcpp/include/rfl.hpp"
+#include "reflectcpp/include/rfl/json.hpp"
 
 #include <mutex>
 
-#define DECLARE_CONFIG(name) \
-struct name##_t; \
-inline name##_t& get##name() { \
-    return ConfigUtils::ConfigParent<name##_t>::GetInstance(); \
-} \
-DECLARE_JSON_STRUCT(name##_t), ConfigUtils::ConfigParent<name##_t>
+#define DECLARE_CONFIG(name)                                 \
+    struct name##_t;                                         \
+    inline name##_t& get##name() {                           \
+        return ConfigUtils::Parent<name##_t>::GetInstance(); \
+    }                                                        \
+    struct name##_t : ConfigUtils::Parent<name##_t>
 
 #define CONFIG_VALUE(name, type, jsonName, def, ...) \
-private: \
-NAMED_VALUE_DEFAULT(ConfigUtils::Specialization<type>::JSONType, __##name, def, jsonName); \
-public: \
-ConfigUtils::ConfigValue<type> name = {&this->Save, &__##name, jsonName, def __VA_OPT__(,) __VA_ARGS__};
+    ConfigUtils::Value<type, ConfigType, &Save, #name, jsonName __VA_OPT__(,) __VA_ARGS__> name = type(def)
 
 namespace ConfigUtils {
     static constexpr auto Logger = Paper::ConstLoggerContext("config-utils");
 
-    template <typename ValueType>
-    struct Specialization {
-        using JSONType = ValueType;
-    };
+    struct RenameProcessor;
 
     template <typename T>
-    struct ConfigParent {
+    struct Parent {
        private:
         static inline std::string __config_path = "";
         static inline T* __self_instance = nullptr;
 
        public:
-        static void Init(modloader::ModInfo const info) {
-            __config_path = Configuration::getConfigFilePath(info);
-            try {
-                ReadFromFile(__config_path, GetInstance());
-            } catch (std::exception const& err) {
-                ConfigUtils::Logger.error("Error reading config: {} (from {})", err.what(), __config_path);
+        static void Init(modloader::ModInfo const& info) {
+            __config_path = CONFIG_UTILS_GET_PATH(info);
+            if (!fileexists(__config_path)) {
+                ConfigUtils::Logger.info("Config for {} {} does not exist at {}", info.id, info.version, __config_path);
+                Save();
+                return;
+            }
+            auto result = rfl::json::read<T, rfl::DefaultIfMissing, RenameProcessor>(readfile(__config_path));
+            if (!result) {
+                ConfigUtils::Logger.error("Error reading config: {} (from {})", result.error().what(), __config_path);
+            } else {
+                rfl::to_view(*result).apply([]<typename F>(F const& field) {
+                    rfl::to_view(GetInstance()).template get<F>()->value = std::move(field.value()->value);
+                });
             }
             Save();
         }
@@ -60,162 +67,224 @@ namespace ConfigUtils {
                 return;
             }
             try {
-                WriteToFile(__config_path, GetInstance());
+                std::string json = rfl::json::write<RenameProcessor>(GetInstance());
+                writefile(__config_path, json);
             } catch (std::exception const& err) {
                 ConfigUtils::Logger.error("Error saving config: {} (to {})", err.what(), __config_path);
             }
         }
+        using ConfigType = T;
     };
 
-    template <typename ValueType>
-    class ConfigValue {
+    template <
+        typename T,
+        typename C,
+        auto Save,
+        rfl::internal::StringLiteral Field,
+        rfl::internal::StringLiteral Json,
+        rfl::internal::StringLiteral Hint = "">
+    class Value {
        private:
-        using JSONType = typename ConfigUtils::Specialization<ValueType>::JSONType;
-        std::string name;
-        JSONType* value;
-        ValueType defaultValue;
-        std::string hoverHint;
-        void (*saveFunc)();
-        std::vector<std::function<void(ValueType)>> changeEvents;
-        std::mutex changeEventsMutex;
+        T value;
+        std::vector<std::function<void(T)>> changeEvents;
+        std::unique_ptr<std::mutex> changeEventsMutex = std::make_unique<std::mutex>();
+
+        friend Parent<C>;
 
        public:
-        bool operator==(ConfigValue<ValueType> const& other) const {
-            return *value == other.GetValue() && defaultValue == other.GetDefaultValue() && name == other.GetName() &&
-                   hoverHint == other.GetHoverHint();
-        }
+        using ReflectionType = T;
+        T reflection() const { return value; };
+        static constexpr rfl::internal::StringLiteral Rename = Json;
 
-        ConfigValue(void (*save)(), JSONType* ref, std::string name, ValueType defaultValue) {
-            this->saveFunc = save;
-            this->value = ref;
-            this->name = name;
-            this->defaultValue = defaultValue;
-        }
+        Value() = default;
+        Value(T const& init) : value(init) {}
 
-        ConfigValue(void (*save)(), JSONType* ref, std::string name, ValueType defaultValue, std::string hoverHint) :
-            ConfigValue(save, ref, name, defaultValue) {
-            this->hoverHint = hoverHint;
-        }
+        bool operator==(T const& value) const { return this->value == value; }
 
-        void SaveValue() { saveFunc(); }
-
-        ValueType GetValue() { return (ValueType) *value; }
-
-        void SetValue(ValueType value, bool save = true) {
-            *this->value = value;
+        T& GetValue() { return value; }
+        T const& GetValue() const { return value; }
+        void SetValue(T const& value, bool save = true) {
+            this->value = value;
             if (save)
-                SaveValue();
-            std::lock_guard<std::mutex> lock(changeEventsMutex);
-            for (auto& event : changeEvents) {
+                Save();
+            std::lock_guard lock(*changeEventsMutex);
+            for (auto& event : changeEvents)
                 event(value);
-            }
         }
 
-        ValueType GetDefaultValue() { return defaultValue; }
+        std::string GetName() const { return Json.str(); }
+        std::string GetHoverHint() const { return Hint.str(); }
+        static T GetDefaultValue() {
+            static T def = []() {
+                C config;
+                return rfl::to_view(config).template get<Field>()->GetValue();
+            }();
+            return def;
+        }
 
-        std::string GetName() { return name; }
-
-        std::string GetHoverHint() { return hoverHint; }
-
-        void AddChangeEvent(std::function<void(ValueType)> event) {
-            std::lock_guard<std::mutex> lock(changeEventsMutex);
+        void AddChangeEvent(std::function<void(T)> event) {
+            std::lock_guard lock(*changeEventsMutex);
             changeEvents.push_back(event);
+        }
+    };
+
+    template <typename T>
+    using Map = std::unordered_map<std::string, T>;
+
+    template <typename T>
+    struct IsValueImpl : std::false_type {};
+    template <typename T, typename C, auto Save, rfl::internal::StringLiteral Field, rfl::internal::StringLiteral Json, rfl::internal::StringLiteral Hint>
+    struct IsValueImpl<Value<T, C, Save, Field, Json, Hint>> : std::true_type {};
+
+    template <typename C>
+    concept IsValue = IsValueImpl<std::remove_cvref_t<C>>::value;
+
+    template <typename C, typename T>
+    concept ValueOf = IsValue<C> && std::is_same_v<typename std::remove_cvref_t<C>::ReflectionType, T>;
+
+    struct RenameProcessor {
+        template <typename StructType>
+        static auto process(auto&& tuple) {
+            if constexpr (std::is_base_of_v<ConfigUtils::Parent<StructType>, StructType>) {
+                return tuple.transform([]<typename F>(F const& field) {
+                    using T = std::remove_pointer_t<typename F::Type>;
+                    if constexpr (requires { T::Rename; }) {
+                        return rfl::Field<T::Rename, typename F::Type>(field.value());
+                    } else {
+                        return field;
+                    }
+                });
+            } else {
+                return tuple;
+            }
         }
     };
 }
 
-#pragma region CodegenValues
-#ifdef CONFIG_UTILS_GCC_TEST
-#include "unity.hpp"
-#endif
+// Equality for rfl types - Generic and Object can be removed in the next reflectcpp update
+namespace rfl {
+    template <class T>
+    bool operator==(Object<T> const& lhs, Object<T> const& rhs) {
+        auto li = lhs.begin();
+        auto ri = rhs.begin();
+        while (li != lhs.end() && ri != rhs.end()) {
+            if (*li != *ri)
+                return false;
+            li++;
+            ri++;
+        }
+        return true;
+    }
 
+    inline bool operator==(Generic const& lhs, Generic const& rhs) {
+        if (lhs.get().index() != rhs.get().index())
+            return false;
+        return std::visit(
+            [&](auto const& val) -> bool {
+                using T = std::remove_cvref_t<decltype(val)>;
+                if constexpr (std::is_same_v<T, std::nullopt_t>)
+                    return true;
+                else
+                    return val == std::get<T>(rhs.get());
+            },
+            lhs.get()
+        );
+    }
+
+    template <class... Vs>
+    bool operator==(Variant<Vs...> const& lhs, Variant<Vs...> const& rhs) {
+        if (lhs.index() != rhs.index())
+            return false;
+        return lhs.visit([&](auto const& val) -> bool {
+            using T = std::remove_cvref_t<decltype(val)>;
+            return val == rfl::get<T>(rhs);
+        });
+    }
+}
+
+#pragma region UNITY_STRUCTS
 #if __has_include("UnityEngine/Vector2.hpp")
-
 #include "UnityEngine/Color.hpp"
 #include "UnityEngine/Vector2.hpp"
 #include "UnityEngine/Vector3.hpp"
 #include "UnityEngine/Vector4.hpp"
 
-namespace ConfigUtils {
-
-#pragma region JSONClasses
-
-#define CONVERSION(clazz, construct, convert) \
-clazz(const UnityEngine::clazz& other) { construct; } \
-clazz& operator=(const UnityEngine::clazz& other) { construct; return *this; } \
-operator UnityEngine::clazz() const { return UnityEngine::clazz convert; }
-
-    DECLARE_JSON_STRUCT(Vector2) {
-        NAMED_VALUE(float, x, NAME_OPTS("x", "X"));
-        NAMED_VALUE(float, y, NAME_OPTS("y", "Y"));
-        CONVERSION(Vector2, x = other.x; y = other.y;, (x, y));
-        Vector2() = default;
-        Vector2(float x, float y) : x(x), y(y) {}
+namespace rfl {
+    template <>
+    struct Reflector<UnityEngine::Color> {
+        struct ReflType {
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+        static UnityEngine::Color to(ReflType const& value) noexcept { return {value.r, value.g, value.b, value.a}; }
+        static ReflType from(UnityEngine::Color const& value) noexcept { return {value.r, value.g, value.b, value.a}; }
     };
 
-    DECLARE_JSON_STRUCT(Vector3) {
-        NAMED_VALUE(float, x, NAME_OPTS("x", "X"));
-        NAMED_VALUE(float, y, NAME_OPTS("y", "Y"));
-        NAMED_VALUE(float, z, NAME_OPTS("z", "Z"));
-        CONVERSION(Vector3, x = other.x; y = other.y; z = other.z;, (x, y, z));
-        Vector3() = default;
-        Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+    template <>
+    struct Reflector<UnityEngine::Vector2> {
+        struct ReflType {
+            float x;
+            float y;
+        };
+        static UnityEngine::Vector2 to(ReflType const& value) noexcept { return {value.x, value.y}; }
+        static ReflType from(UnityEngine::Vector2 const& value) noexcept { return {value.x, value.y}; }
     };
 
-    DECLARE_JSON_STRUCT(Vector4) {
-        NAMED_VALUE(float, x, NAME_OPTS("x", "X"));
-        NAMED_VALUE(float, y, NAME_OPTS("y", "Y"));
-        NAMED_VALUE(float, z, NAME_OPTS("z", "Z"));
-        NAMED_VALUE(float, w, NAME_OPTS("w", "W"));
-        CONVERSION(Vector4, x = other.x; y = other.y; z = other.z; w = other.w;, (x, y, z, w));
-        Vector4() = default;
-        Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+    template <>
+    struct Reflector<UnityEngine::Vector3> {
+        struct ReflType {
+            float x;
+            float y;
+            float z;
+        };
+        static UnityEngine::Vector3 to(ReflType const& value) noexcept { return {value.x, value.y, value.z}; }
+        static ReflType from(UnityEngine::Vector3 const& value) noexcept { return {value.x, value.y, value.z}; }
     };
 
-    DECLARE_JSON_STRUCT(Color) {
-        NAMED_VALUE(float, r, NAME_OPTS("r", "R"));
-        NAMED_VALUE(float, g, NAME_OPTS("g", "G"));
-        NAMED_VALUE(float, b, NAME_OPTS("b", "B"));
-        NAMED_VALUE(float, a, NAME_OPTS("a", "A"));
-        CONVERSION(Color, r = other.r; g = other.g; b = other.b; a = other.a;, (r, g, b, a));
-        Color() = default;
-        Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
+    template <>
+    struct Reflector<UnityEngine::Vector4> {
+        struct ReflType {
+            float x;
+            float y;
+            float z;
+            float w;
+        };
+        static UnityEngine::Vector4 to(ReflType const& value) noexcept { return {value.x, value.y, value.z, value.w}; }
+        static ReflType from(UnityEngine::Vector4 const& value) noexcept { return {value.x, value.y, value.z, value.w}; }
     };
-
-#pragma endregion
-
-#pragma region Specializations
-
-#define SPECIALIZATION(type) \
-template <> \
-struct Specialization<UnityEngine::type> { \
-    using JSONType = type; \
-}; \
-template <> \
-struct Specialization<std::vector<UnityEngine::type>> { \
-    using JSONType = std::vector<type>; \
-};
-
-    SPECIALIZATION(Vector2)
-    SPECIALIZATION(Vector3)
-    SPECIALIZATION(Vector4)
-    SPECIALIZATION(Color)
-
-#undef SPECIALIZATION
-
-#pragma endregion
-
 }
 
+inline bool operator==(UnityEngine::Color const& lhs, UnityEngine::Color const& rhs) {
+    return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b && lhs.a == rhs.a;
+}
+
+inline bool operator==(UnityEngine::Vector2 const& lhs, UnityEngine::Vector2 const& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+inline bool operator==(UnityEngine::Vector3 const& lhs, UnityEngine::Vector3 const& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+inline bool operator==(UnityEngine::Vector4 const& lhs, UnityEngine::Vector4 const& rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
+}
 #endif
 #pragma endregion
 
 #pragma region BSML_LITE
 #if __has_include("bsml/shared/BSML-Lite.hpp")
-#include "UnityEngine/UI/LayoutElement.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
 
-inline BSML::ToggleSetting* AddConfigValueToggle(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
+#include "UnityEngine/Color.hpp"
+#include "UnityEngine/UI/LayoutElement.hpp"
+#include "UnityEngine/Vector2.hpp"
+#include "UnityEngine/Vector3.hpp"
+#include "UnityEngine/Vector4.hpp"
+
+inline BSML::ToggleSetting* AddConfigValueToggle(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<bool> auto& configValue) {
     auto object =
         BSML::Lite::CreateToggle(parent, configValue.GetName(), configValue.GetValue(), [&configValue](bool value) { configValue.SetValue(value); });
     if (!configValue.GetHoverHint().empty())
@@ -224,7 +293,7 @@ inline BSML::ToggleSetting* AddConfigValueToggle(const BSML::Lite::TransformWrap
 }
 
 inline ::UnityEngine::UI::Toggle*
-AddConfigValueModifierButton(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<bool>& configValue) {
+AddConfigValueModifierButton(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<bool> auto& configValue) {
     auto object = BSML::Lite::CreateModifierButton(parent, configValue.GetName(), configValue.GetValue(), [&configValue](bool value) {
         configValue.SetValue(value);
     });
@@ -235,8 +304,9 @@ AddConfigValueModifierButton(const BSML::Lite::TransformWrapper& parent, ConfigU
 
 inline void SetButtons(BSML::IncrementSetting* increment) {
     auto child = increment->get_gameObject()->get_transform()->GetChild(1);
-    auto decButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->First();
-    auto incButton = child->GetComponentsInChildren<UnityEngine::UI::Button*>()->Last();
+    auto buttons = child->GetComponentsInChildren<UnityEngine::UI::Button*>();
+    auto decButton = CONFIG_UTILS_FIRST(buttons);
+    auto incButton = CONFIG_UTILS_LAST(buttons);
     increment->onChange = [oldFunc = std::move(increment->onChange), increment, decButton, incButton](float value) {
         oldFunc(value);
         decButton->set_interactable(value > increment->minValue);
@@ -247,11 +317,12 @@ inline void SetButtons(BSML::IncrementSetting* increment) {
 }
 
 inline BSML::IncrementSetting*
-AddConfigValueIncrementInt(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, int increment, int min, int max) {
-    auto object =
-        BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max, [&configValue](float value) {
+AddConfigValueIncrementInt(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<int> auto& configValue, int increment, int min, int max) {
+    auto object = BSML::Lite::CreateIncrementSetting(
+        parent, configValue.GetName(), 0, increment, configValue.GetValue(), min, max, [&configValue](float value) {
             configValue.SetValue((int) value);
-        });
+        }
+    );
     SetButtons(object);
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
@@ -259,17 +330,12 @@ AddConfigValueIncrementInt(const BSML::Lite::TransformWrapper& parent, ConfigUti
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementFloat(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<float>& configValue, int decimals, float increment, float min, float max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<float> auto& configValue, int decimals, float increment, float min, float max
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName(),
-        decimals,
-        increment,
-        configValue.GetValue(),
-        min,
-        max,
-        [&configValue](float value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max, [&configValue](float value) {
+            configValue.SetValue(value);
+        }
     );
     SetButtons(object);
     if (!configValue.GetHoverHint().empty())
@@ -278,17 +344,12 @@ inline BSML::IncrementSetting* AddConfigValueIncrementFloat(
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementDouble(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<double>& configValue, int decimals, double increment, double min, double max
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<double> auto& configValue, int decimals, double increment, double min, double max
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName(),
-        decimals,
-        increment,
-        configValue.GetValue(),
-        min,
-        max,
-        [&configValue](float value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), decimals, increment, configValue.GetValue(), min, max, [&configValue](float value) {
+            configValue.SetValue(value);
+        }
     );
     SetButtons(object);
     if (!configValue.GetHoverHint().empty())
@@ -297,7 +358,7 @@ inline BSML::IncrementSetting* AddConfigValueIncrementDouble(
 }
 
 inline BSML::IncrementSetting* AddConfigValueIncrementEnum(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, std::vector<std::string> const enumStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<int> auto& configValue, std::vector<std::string> const enumStrings
 ) {
     auto object = BSML::Lite::CreateIncrementSetting(parent, configValue.GetName(), 0, 1, configValue.GetValue(), 0, enumStrings.size() - 1);
     object->onChange = [&configValue, object, enumStrings](float value) {
@@ -311,11 +372,10 @@ inline BSML::IncrementSetting* AddConfigValueIncrementEnum(
     return object;
 }
 
-template <class V>
-requires(std::is_convertible_v<V, float>)
-inline BSML::SliderSetting* AddConfigValueSlider(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, int decimals, float increment, float min, float max
-) {
+template <ConfigUtils::IsValue C>
+requires(std::is_convertible_v<typename C::ReflectionType, float>)
+inline BSML::SliderSetting*
+AddConfigValueSlider(BSML::Lite::TransformWrapper const& parent, C& configValue, int decimals, float increment, float min, float max) {
     auto object = BSML::Lite::CreateSliderSetting(
         parent, configValue.GetName(), increment, configValue.GetValue(), min, max, [&configValue](float value) { configValue.SetValue(value); }
     );
@@ -325,22 +385,14 @@ inline BSML::SliderSetting* AddConfigValueSlider(
     return object;
 }
 
-template <class V>
-requires(std::is_convertible_v<V, float>)
-inline BSML::SliderSetting* AddConfigValueSliderIncrement(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<V>& configValue, float increment, float min, float max
-) {
+template <ConfigUtils::IsValue C>
+requires(std::is_convertible_v<typename C::ReflectionType, float>)
+inline BSML::SliderSetting*
+AddConfigValueSliderIncrement(BSML::Lite::TransformWrapper const& parent, C& configValue, float increment, float min, float max) {
     auto object = BSML::Lite::CreateSliderSetting(
-        parent,
-        configValue.GetName(),
-        increment,
-        configValue.GetValue(),
-        min,
-        max,
-        1,
-        true,
-        {},
-        [&configValue](float value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), increment, configValue.GetValue(), min, max, 1, true, {}, [&configValue](float value) {
+            configValue.SetValue(value);
+        }
     );
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
@@ -348,7 +400,7 @@ inline BSML::SliderSetting* AddConfigValueSliderIncrement(
 }
 
 inline ::HMUI::InputFieldView*
-AddConfigValueInputString(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue) {
+AddConfigValueInputString(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<std::string> auto& configValue) {
     auto object = BSML::Lite::CreateStringSetting(parent, configValue.GetName(), configValue.GetValue(), [&configValue](StringW value) {
         configValue.SetValue(static_cast<std::string>(value));
     });
@@ -358,7 +410,7 @@ AddConfigValueInputString(const BSML::Lite::TransformWrapper& parent, ConfigUtil
 }
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownString(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<std::string>& configValue, std::span<std::string_view> const dropdownStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<std::string> auto& configValue, std::span<std::string_view> const dropdownStrings
 ) {
     int currentIndex = 0;
     std::string_view currentValue = "";
@@ -380,7 +432,7 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownString(
 }
 
 inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<int>& configValue, std::span<std::string_view> const dropdownStrings
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<int> auto& configValue, std::span<std::string_view> const dropdownStrings
 ) {
     int value = configValue.GetValue();
     std::string_view stringValue = value < dropdownStrings.size() ? dropdownStrings[value] : "";
@@ -405,31 +457,26 @@ inline BSML::DropdownListSetting* AddConfigValueDropdownEnum(
 }
 
 inline BSML::ColorSetting*
-AddConfigValueColorPicker(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<::UnityEngine::Color>& configValue) {
+AddConfigValueColorPicker(BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<::UnityEngine::Color> auto& configValue) {
     auto object = BSML::Lite::CreateColorPicker(
-        parent,
-        configValue.GetName(),
-        configValue.GetValue(),
-        nullptr,
-        nullptr,
-        [&configValue](::UnityEngine::Color value) { configValue.SetValue(value); }
+        parent, configValue.GetName(), configValue.GetValue(), nullptr, nullptr, [&configValue](::UnityEngine::Color value) {
+            configValue.SetValue(value);
+        }
     );
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object, configValue.GetHoverHint());
     return object;
 }
 
-template <class T>
-requires std::is_same_v<T, ::UnityEngine::Vector2> || std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
+template <ConfigUtils::IsValue C>
+requires(
+    std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector2> || std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector3> ||
+    std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector4>
+)
 inline std::array<BSML::IncrementSetting*, 2>
-AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+AddConfigValueIncrementVector2(BSML::Lite::TransformWrapper const& parent, C& configValue, int decimals, double increment) {
     auto object1 = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " X",
-        decimals,
-        increment,
-        configValue.GetValue().x,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " X", decimals, increment, configValue.GetValue().x, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.x = value;
             configValue.SetValue(newValue);
@@ -439,12 +486,7 @@ AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, Confi
     if (!configValue.GetHoverHint().empty())
         BSML::Lite::AddHoverHint(object1, configValue.GetHoverHint());
     auto object2 = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " Y",
-        decimals,
-        increment,
-        configValue.GetValue().y,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " Y", decimals, increment, configValue.GetValue().y, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.y = value;
             configValue.SetValue(newValue);
@@ -456,18 +498,13 @@ AddConfigValueIncrementVector2(const BSML::Lite::TransformWrapper& parent, Confi
     return {object1, object2};
 }
 
-template <class T>
-requires std::is_same_v<T, ::UnityEngine::Vector3> || std::is_same_v<T, ::UnityEngine::Vector4>
+template <ConfigUtils::IsValue C>
+requires(std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector3> || std::is_same_v<typename C::ReflectionType, ::UnityEngine::Vector4>)
 inline std::array<BSML::IncrementSetting*, 3>
-AddConfigValueIncrementVector3(const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<T>& configValue, int decimals, double increment) {
+AddConfigValueIncrementVector3(BSML::Lite::TransformWrapper const& parent, C& configValue, int decimals, double increment) {
     auto objects = AddConfigValueIncrementVector2(parent, configValue, decimals, increment);
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " Z",
-        decimals,
-        increment,
-        configValue.GetValue().z,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " Z", decimals, increment, configValue.GetValue().z, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.z = value;
             configValue.SetValue(newValue);
@@ -480,16 +517,11 @@ AddConfigValueIncrementVector3(const BSML::Lite::TransformWrapper& parent, Confi
 }
 
 inline std::array<::BSML::IncrementSetting*, 4> AddConfigValueIncrementVector4(
-    const BSML::Lite::TransformWrapper& parent, ConfigUtils::ConfigValue<::UnityEngine::Vector4>& configValue, int decimals, double increment
+    BSML::Lite::TransformWrapper const& parent, ConfigUtils::ValueOf<::UnityEngine::Vector4> auto& configValue, int decimals, double increment
 ) {
     auto objects = AddConfigValueIncrementVector3(parent, configValue, decimals, increment);
     auto object = BSML::Lite::CreateIncrementSetting(
-        parent,
-        configValue.GetName() + " W",
-        decimals,
-        increment,
-        configValue.GetValue().w,
-        [&configValue](float value) {
+        parent, configValue.GetName() + " W", decimals, increment, configValue.GetValue().w, [&configValue](float value) {
             auto newValue = configValue.GetValue();
             newValue.w = value;
             configValue.SetValue(newValue);
